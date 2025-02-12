@@ -33,7 +33,7 @@ const Hero = () => {
                 /> */}
                 <Link href="/create-trip"> {/* Wrap button with Link */}
                   <button className="px-8 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-bold">
-                    Lets get started
+                     Get started
                   </button>
                 </Link>
                 

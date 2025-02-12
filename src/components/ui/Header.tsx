@@ -14,8 +14,8 @@ const Header = () => {
         
         {/* Sign In Button */}
 <Button 
-  className="bg-black text-white hover:bg-gray-800 border-black transition duration-300 ease-in-out rounded-md py-2 px-4">
-  Sign In
+  className="bg-red-600 text-white hover:bg-red-700 border-black transition duration-300 ease-in-out rounded-md py-2 px-4">
+ <p className=' text-muted font-bold '> Sign In</p>
 </Button>
 
       </div>
