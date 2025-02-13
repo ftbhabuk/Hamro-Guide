@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Coins, Users, Heart } from "lucide-react";
+import { Users, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useGoogleLogin } from "@react-oauth/google";
+import { useRouter } from "next/navigation"; // Import useRouter
 
 // Define types
 interface Option {
@@ -159,14 +161,54 @@ interface TripPlan {
 
 const CreateTripPage = () => {
   // State management
-  const [destination, setDestination] = useState<string>(""); // Changed to string
+  const [destination, setDestination] = useState<string>(""); // Changed to
+  // string
   const [duration, setDuration] = useState<string>("");
   const [budget, setBudget] = useState<string>("");
   const [travelCompanion, setTravelCompanion] = useState<string>("");
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [specialRequirements, setSpecialRequirements] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [tripPlan, setTripPlan] = useState<TripPlan | null>(null); // State to store the trip plan
+  const [tripPlan, setTripPlan] = useState<TripPlan | null>(null); // State to
+  // store the trip plan
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const router = useRouter(); // Initialize useRouter
+
+  // Google Auth
+  const login = useGoogleLogin({
+    onSuccess: (tokenResponse) => {
+      console.log(tokenResponse);
+      setIsLoggedIn(true);
+      // After successful login, you might want to redirect back to the
+      // current page or a different page
+      // router.push('/create-trip'); // Example: Redirect back to the
+      // create-trip page
+    },
+    onError: (error) => {
+      console.error("Google Login Failed:", error);
+    },
+  });
+
+  const logout = () => {
+    // In a real application, you would also revoke the token from Google.
+    setIsLoggedIn(false);
+    console.log("User signed out");
+  };
+
+  useEffect(() => {
+    // Check if the user is already logged in (e.g., by checking for a token in
+    // local storage)
+    // For simplicity, we'll just set isLoggedIn to false initially.
+    // Implement your own logic here.
+    const storedToken = localStorage.getItem("google_token"); // Example:
+    // Check for token in local storage
+    if (storedToken) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []);
 
   // Handlers
   const toggleActivity = useCallback((activity: string) => {
@@ -179,6 +221,14 @@ const CreateTripPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isLoggedIn) {
+      // Redirect to login if not logged in
+      console.log("Redirecting to login...");
+      login(); // Trigger the Google login flow
+      return; // Stop the form submission
+    }
+
     setIsLoading(true);
 
     const formData = {
@@ -235,13 +285,22 @@ const CreateTripPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <header className="w-full py-4 px-6 bg-white border-b">
-        <div className="max-w-3xl mx-auto">
+      {/* <header className="w-full py-4 px-6 bg-white border-b">
+        <div className="max-w-3xl mx-auto flex justify-between items-center">
           <h1 className="text-xl font-semibold text-gray-800">
             AI Travel Planner
           </h1>
+          {isLoggedIn ? (
+            <Button variant="outline" onClick={logout}>
+              Sign Out
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={() => login()}>
+              Sign in with Google 🚀
+            </Button>
+          )}
         </div>
-      </header>
+      </header> */}
 
       <main className="max-w-3xl mx-auto px-6 py-8">
         <form onSubmit={handleSubmit} className="space-y-8">
