@@ -6,7 +6,10 @@ import { Coins, Users, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import dynamic from 'next/dynamic';
-import type { SingleValue } from 'react-select';
+import type {  SingleValue } from 'react-select';
+import {toast } from "sonner";
+
+
 // Define types for Google Places Autocomplete
 interface Option {
   label: string;
@@ -47,19 +50,14 @@ const CreateTripPage = () => {
     );
   };
 
-  // Handler for form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = {
-      destination: destination?.label || '',
-      duration,
-      budget,
-      travelCompanion,
-      selectedActivities,
-      specialRequirements
-    };
-    console.log('Form submitted:', formData);
-    // Add your submission logic here
+    if (!destination || !duration || !budget || !travelCompanion) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+    toast.success("Trip details submitted successfully!");
+    console.log("Form submitted:", { destination, duration, budget, travelCompanion, selectedActivities, specialRequirements });
   };
 
   // Custom handler for Google Places Autocomplete
