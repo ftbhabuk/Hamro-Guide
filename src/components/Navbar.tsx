@@ -1,11 +1,13 @@
-"use client"
+"use client";
 import React, { useState, useEffect } from "react";
 import { Sprout } from "lucide-react";
 import { Button } from "./ui/button";
 import { useGoogleLogin } from "@react-oauth/google";
+import { useRouter } from "next/navigation";
 
 const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
 
   const login = useGoogleLogin({
     onSuccess: (tokenResponse) => {
@@ -34,11 +36,18 @@ const Navbar = () => {
     }
   }, []);
 
+  const handleLogoClick = () => {
+    router.push("/");
+  };
+
   return (
-    <header className="w-full py-4 px-6 bg-white border-b">
+    <header className="w-full py-4 px-6 bg-white border-b sticky top-0 z-50">
       <div className="max-w-4xl mx-auto flex justify-between items-center">
         {/* Added justify-between to space out content */}
-        <div className="flex items-center">
+        <div
+          className="flex items-center cursor-pointer"
+          onClick={handleLogoClick}
+        >
           <Sprout className="mr-2" />
           <h1 className="text-xl font-semibold text-gray-800">Hamro Guide</h1>
         </div>

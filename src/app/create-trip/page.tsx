@@ -285,22 +285,6 @@ const CreateTripPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* <header className="w-full py-4 px-6 bg-white border-b">
-        <div className="max-w-3xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-semibold text-gray-800">
-            AI Travel Planner
-          </h1>
-          {isLoggedIn ? (
-            <Button variant="outline" onClick={logout}>
-              Sign Out
-            </Button>
-          ) : (
-            <Button variant="outline" onClick={() => login()}>
-              Sign in with Google 🚀
-            </Button>
-          )}
-        </div>
-      </header> */}
 
       <main className="max-w-3xl mx-auto px-6 py-8">
         <form onSubmit={handleSubmit} className="space-y-8">
