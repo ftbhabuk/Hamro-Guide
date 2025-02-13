@@ -3,11 +3,12 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Users, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useGoogleLogin } from "@react-oauth/google";
-import { useRouter } from "next/navigation"; // Import useRouter
+import { useRouter } from "next/navigation";
+import { BUDGET_OPTIONS, COMPANION_OPTIONS, ACTIVITIES } from "./constants";
+import axios from "axios";
 
 // Define types
 interface Option {
@@ -25,33 +26,6 @@ interface CompanionOption {
   icon: React.FC;
   description: string;
 }
-
-// Configuration Constants
-const BUDGET_OPTIONS: BudgetOption[] = [
-  { level: "Low", range: "0 - 1000 NRP" },
-  { level: "Medium", range: "1000 - 2500 NRP" },
-  { level: "High", range: "2500+ NRP" },
-];
-
-const COMPANION_OPTIONS: CompanionOption[] = [
-  { type: "Solo", icon: Users, description: "Traveling alone" },
-  { type: "Family", icon: Users, description: "With family members" },
-  { type: "Friends", icon: Users, description: "With a group of friends" },
-  { type: "Couple", icon: Heart, description: "Romantic getaway" },
-  { type: "Business", icon: Users, description: "Business trip" },
-  { type: "Group Tour", icon: Users, description: "Organized tour group" },
-];
-
-const ACTIVITIES = [
-  "Cultural",
-  "Adventure",
-  "Relaxation",
-  "Shopping",
-  "Food & Dining",
-  "Nature",
-  "Historical",
-  "Nightlife",
-];
 
 // Helper Components
 const BudgetSelection = ({
@@ -111,9 +85,7 @@ const CompanionSelection = ({
           onClick={() => setTravelCompanion(companion.type)}
         >
           <div className="flex items-center space-x-2">
-            {React.createElement(companion.icon, {
-              // className: "h-5 w-5",
-            })}
+            {React.createElement(companion.icon, {})}
             <div>
               <h3 className="font-semibold">{companion.type}</h3>
               <p className="text-sm text-gray-500">{companion.description}</p>
@@ -160,30 +132,48 @@ interface TripPlan {
 }
 
 const CreateTripPage = () => {
-  // State management
-  const [destination, setDestination] = useState<string>(""); // Changed to
-  // string
+  const [destination, setDestination] = useState<string>("");
   const [duration, setDuration] = useState<string>("");
   const [budget, setBudget] = useState<string>("");
   const [travelCompanion, setTravelCompanion] = useState<string>("");
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [specialRequirements, setSpecialRequirements] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [tripPlan, setTripPlan] = useState<TripPlan | null>(null); // State to
-  // store the trip plan
+  const [tripPlan, setTripPlan] = useState<TripPlan | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [open, setOpen] = React.useState(false);
+  const [userData, setUserData] = useState<any>(null);
+  const [jsonBinId, setJsonBinId] = useState<string | null>(null);
 
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
+  const JSONBIN_URL = "https://api.jsonbin.io/v3/b";
 
-  // Google Auth
+  // **HARDCODED API KEY (FOR DEBUGGING ONLY)**
+  const apiKey =
+    "$2a$10$R6Pd/bZ7RzyKLchhTQkUPufqnPgK7tXiZOgmrbwAYDX3LapMWrnL2";
+
   const login = useGoogleLogin({
-    onSuccess: (tokenResponse) => {
-      console.log(tokenResponse);
+    onSuccess: async (tokenResponse) => {
+      console.log("Google Login Success:", tokenResponse);
       setIsLoggedIn(true);
-      // After successful login, you might want to redirect back to the
-      // current page or a different page
-      // router.push('/create-trip'); // Example: Redirect back to the
-      // create-trip page
+
+      try {
+        const googleResponse = await axios.get(
+          "https://www.googleapis.com/oauth2/v3/userinfo",
+          {
+            headers: {
+              Authorization: `Bearer ${tokenResponse.access_token}`,
+            },
+          }
+        );
+
+        const userInfo = googleResponse.data;
+        console.log("User Info from Google:", userInfo);
+        setUserData(userInfo);
+        localStorage.setItem("user_data", JSON.stringify(userInfo));
+      } catch (error) {
+        console.error("Failed to fetch user info from Google:", error);
+      }
     },
     onError: (error) => {
       console.error("Google Login Failed:", error);
@@ -191,26 +181,20 @@ const CreateTripPage = () => {
   });
 
   const logout = () => {
-    // In a real application, you would also revoke the token from Google.
     setIsLoggedIn(false);
+    setUserData(null);
+    localStorage.removeItem("user_data");
     console.log("User signed out");
   };
 
   useEffect(() => {
-    // Check if the user is already logged in (e.g., by checking for a token in
-    // local storage)
-    // For simplicity, we'll just set isLoggedIn to false initially.
-    // Implement your own logic here.
-    const storedToken = localStorage.getItem("google_token"); // Example:
-    // Check for token in local storage
-    if (storedToken) {
+    const storedUserData = localStorage.getItem("user_data");
+    if (storedUserData) {
+      setUserData(JSON.parse(storedUserData));
       setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
     }
   }, []);
 
-  // Handlers
   const toggleActivity = useCallback((activity: string) => {
     setSelectedActivities((prev) =>
       prev.includes(activity)
@@ -219,65 +203,114 @@ const CreateTripPage = () => {
     );
   }, []);
 
+  const storeInJsonBin = async (data: any) => {
+    try {
+      console.log("Attempting to store data in JSONBin.io...", data);
+
+      // Use the hardcoded API key
+      console.log("API Key length:", apiKey.length);
+      console.log("API key starts with:", apiKey.substring(0, 10));
+
+      const response = await axios.post("https://api.jsonbin.io/v3/b", data, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-Master-Key": apiKey,
+          "X-Bin-Name": `Trip Plan - ${data.formData.destination} - ${new Date().toISOString()}`,
+        },
+      });
+
+      console.log("Successfully stored data in JSONBin.io:", response.data);
+      setJsonBinId(response.data.metadata.id);
+
+      // Add success message in UI
+      if (response.data.metadata.id) {
+        // Store the ID for later reference
+        localStorage.setItem("lastTripPlanId", response.data.metadata.id);
+      }
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("JSONBin.io Error Details:", {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+        });
+      }
+      console.error("Failed to store data in JSONBin.io:", error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!isLoggedIn) {
-      // Redirect to login if not logged in
       console.log("Redirecting to login...");
-      login(); // Trigger the Google login flow
-      return; // Stop the form submission
+      login();
+      return;
     }
 
     setIsLoading(true);
 
     const formData = {
-      destination: destination, // Use the string value directly
+      destination,
       duration,
       budget,
       travelCompanion,
       selectedActivities,
       specialRequirements,
+      user: userData
+        ? {
+            name: userData.name,
+            email: userData.email,
+          }
+        : null,
+      timestamp: new Date().toISOString(),
     };
 
     console.log("Form data submitted:", formData);
 
     try {
-      const response = await fetch("/api/", {
-        method: "POST",
+      const response = await axios.post("/api/", formData, {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
       });
 
-      console.log("API Response Status:", response.status);
+      console.log("API Response Data:", response.data);
 
-      if (!response.ok) {
-        // Log the error response body
-        const errorData = await response.json();
-        console.error("API Error Response:", errorData);
-        throw new Error(
-          `HTTP error! Status: ${response.status}, Message: ${
-            errorData?.error || "Unknown error"
-          }`
-        );
-      }
+      if (response.data.success) {
+        const tripPlanData = response.data.data;
+        console.log("Trip plan generated successfully:", tripPlanData);
+        setTripPlan(tripPlanData);
 
-      const data = await response.json();
+        try {
+          const jsonBinResponse = await storeInJsonBin({
+            formData,
+            tripPlan: tripPlanData,
+          });
+          console.log(
+            "Trip plan stored in JSONBin.io with ID:",
+            jsonBinResponse.metadata.id
+          );
+          localStorage.setItem(
+            "lastTripPlanBinId",
+            jsonBinResponse.metadata.id
+          );
+        } catch (jsonBinError) {
+          console.error(
+            "Failed to store trip plan in JSONBin.io:",
+            jsonBinError
+          );
+        }
 
-      console.log("API Response Data:", data);
-
-      if (data.success) {
-        console.log("Trip plan generated successfully:", data.data);
-        setTripPlan(data.data); // Store the trip plan in state
+        setOpen(true);
       } else {
-        console.error("Failed to generate trip plan:", data.error);
-        // Handle the error (e.g., display an error message)
+        console.error("Failed to generate trip plan:", response.data.error);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("Error during API call:", error);
-      // Handle network errors or exceptions
     } finally {
       setIsLoading(false);
     }
@@ -285,10 +318,24 @@ const CreateTripPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-
       <main className="max-w-3xl mx-auto px-6 py-8">
+        {userData && (
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold">
+              Welcome, {userData.name}!
+            </h2>
+            <p>Email: {userData.email}</p>
+            <img
+              src={userData.picture}
+              alt="Google Profile"
+              className="rounded-full w-12 h-12"
+            />
+            <Button onClick={logout} className="ml-4">
+              Logout
+            </Button>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Title and Description */}
           <div className="space-y-2">
             <h1 className="text-3xl font-semibold text-gray-900">
               Tell us your travel preferences
@@ -299,7 +346,6 @@ const CreateTripPage = () => {
             </p>
           </div>
 
-          {/* Destination Input */}
           <div className="space-y-2">
             <label className="text-lg font-medium text-gray-900">
               What is your destination of choice?
@@ -313,7 +359,6 @@ const CreateTripPage = () => {
             />
           </div>
 
-          {/* Duration Input */}
           <div className="space-y-2">
             <label className="text-lg font-medium text-gray-900">
               How many days are you planning your trip?
@@ -328,28 +373,23 @@ const CreateTripPage = () => {
             />
           </div>
 
-          {/* Budget Selection */}
           <BudgetSelection budget={budget} setBudget={setBudget} />
 
-          {/* Travel Companions */}
           <CompanionSelection
             travelCompanion={travelCompanion}
             setTravelCompanion={setTravelCompanion}
           />
 
-          {/* Additional Preferences */}
           <div className="space-y-4">
             <h2 className="text-lg font-medium text-gray-900">
               Additional Preferences
             </h2>
 
-            {/* Travel Style */}
             <ActivitySelection
               selectedActivities={selectedActivities}
               toggleActivity={toggleActivity}
             />
 
-            {/* Special Requirements */}
             <div className="space-y-2">
               <label className="text-base font-medium text-gray-900">
                 Any special requirements or preferences?
@@ -363,7 +403,6 @@ const CreateTripPage = () => {
             </div>
           </div>
 
-          {/* Generate Button */}
           <div className="pt-6">
             <Button
               type="submit"
@@ -374,13 +413,19 @@ const CreateTripPage = () => {
             </Button>
           </div>
         </form>
-        {/* Display Trip Plan */}
+
         {tripPlan && (
-          <div className="mt-8">
-            <h2 className="text-2xl font-semibold text-gray-900">
-              Generated Trip Plan:
-            </h2>
-            <pre>{JSON.stringify(tripPlan, null, 2)}</pre>
+          <div className="mt-4 p-4 bg-gray-100 rounded">
+            <h3 className="text-lg font-semibold">Trip Plan Generated</h3>
+            <p className="text-sm text-gray-600">
+              Your trip plan has been generated and stored in JSONBin.io
+              {jsonBinId && ` with ID: ${jsonBinId}`}
+            </p>
+            <div className="grid gap-4 py-4">
+              <pre className="overflow-auto p-4 bg-white rounded">
+                {JSON.stringify(tripPlan, null, 2)}
+              </pre>
+            </div>
           </div>
         )}
       </main>
