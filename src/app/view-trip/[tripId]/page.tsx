@@ -5,7 +5,8 @@ import axios from "axios";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
-// import TripDetailsPage from "@/components/TripDetailsPage";
+import TripDetailsPage from "@/components/TripDetailsPage";
+import TripDetailsViewer from "@/components/TripDetailsViewer";
 
 const ViewTripPage = () => {
   const params = useParams();
@@ -16,7 +17,7 @@ const ViewTripPage = () => {
   const tripId = params?.tripId;
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async () => { 
       setLoading(true);
       try {
         const apiKey = "$2a$10$R6Pd/bZ7RzyKLchhTQkUPufqnPgK7tXiZOgmrbwAYDX3LapMWrnL2";
@@ -67,15 +68,15 @@ const ViewTripPage = () => {
     <div className="max-w-4xl mx-auto p-4 space-y-4">
       <h1 className="text-2xl font-bold mb-6">Trip Plan Details</h1>
       
-      {/* {data?.record ? (
-        <TripDetailsPage tripData={data.record} />
-      ) : (
-        <Alert>
-          <AlertDescription>
-            No trip data found for ID: {tripId}
-          </AlertDescription>
-        </Alert>
-      )} */}
+      {data ? (
+      <TripDetailsViewer data={data} />
+    ) : (
+      <Alert>
+        <AlertDescription>
+          No trip data found for ID: {tripId}
+        </AlertDescription>
+      </Alert>
+    )}
 
       {/* Optional: Keep the raw JSON display for debugging */}
       {data && (
