@@ -8,20 +8,20 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import {
   Hotel,
   MapPin,
   Calendar,
   DollarSign,
   Utensils,
-  AlertCircle,
+  BadgeInfo,
   Clock,
   Sun,
   Plane,
   Bus,
   ShieldAlert,
   Luggage,
-  BadgeInfo,
 } from 'lucide-react';
 
 const EnhancedTripViewer = ({ data }) => {
@@ -168,7 +168,10 @@ const EnhancedTripViewer = ({ data }) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {Object.entries(tripData.essentialInfo.emergencyContacts).map(([service, contact]) => (
+            {Object.entries(tripData.essentialInfo.emergencyContacts).map(([
+              service,
+              contact,
+            ]) => (
               <div key={service} className="flex justify-between">
                 <span className="capitalize">{service}:</span>
                 <span className="font-medium">{contact}</span>
@@ -195,6 +198,131 @@ const EnhancedTripViewer = ({ data }) => {
     </div>
   );
 
+  const HotelsTabContent = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {tripData.hotels.map((hotel, index) => (
+        <Card key={index}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Hotel className="w-5 h-5 text-blue-500" />
+              {hotel.name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-gray-500" />
+                {/* Google Maps Link */}
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                    `${hotel.name} ${hotel.location}`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:underline"
+                >
+                  {hotel.location}
+                </a>
+              </div>
+              <div className="flex justify-between">
+                <span>${hotel.pricePerNight}/night</span>
+                <span>Rating: {hotel.rating}/5</span>
+              </div>
+              <div>
+                <p className="font-medium mb-2">Amenities:</p>
+                <div className="flex flex-wrap gap-2">
+                  {hotel.amenities.map((amenity, i) => (
+                    <span key={i} className="bg-gray-100 px-2 py-1 rounded text-sm">
+                      {amenity}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              {hotel.notes && <p className="text-sm text-gray-600">{hotel.notes}</p>}
+
+              {/* Check Availability Button with Google Maps Link Format */}
+              <Button
+                variant='outline'
+                className='font-semibold shadow-md opacity-90 on-hover:opacity-100'
+                onClick={() => {
+                  const availabilityQuery = `availability for ${hotel.name} in ${hotel.location}`;
+                  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                    availabilityQuery
+                  )}`;
+                  window.open(googleMapsUrl, '_blank');
+                }}
+              >
+                Check Availability
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
+  const RestaurantsTabContent = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {tripData.restaurants.map((restaurant, index) => (
+        <Card key={index}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Utensils className="w-5 h-5 text-blue-500" />
+              {restaurant.name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-gray-500" />
+                {/* Google Maps Link */}
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                    `${restaurant.name} ${restaurant.location}`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:underline"
+                >
+                  {restaurant.location}
+                </a>
+              </div>
+              <div className="flex justify-between">
+                <span>{restaurant.cuisine}</span>
+                <span>{restaurant.priceRange}</span>
+              </div>
+              <div>
+                <p className="font-medium mb-2">Must Try Dishes:</p>
+                <div className="flex flex-wrap gap-2">
+                  {restaurant.mustTryDishes.map((dish, i) => (
+                    <span key={i} className="bg-gray-100 px-2 py-1 rounded text-sm">
+                      {dish}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Check Availability Button with Google Maps Link Format */}
+              <Button
+                variant="outline"
+                 className='font-semibold shadow-md opacity-90 on-hover:opacity-100'
+                onClick={() => {
+                  const availabilityQuery = `availability for ${restaurant.name} in ${restaurant.location}`;
+                  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                    availabilityQuery
+                  )}`;
+                  window.open(googleMapsUrl, '_blank');
+                }}
+              >
+                Check Availability
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
   return (
     <div className="max-w-7xl mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">
@@ -218,7 +346,9 @@ const EnhancedTripViewer = ({ data }) => {
             {tripData.dailyItinerary.map((day) => (
               <Card key={day.day}>
                 <CardHeader>
-                  <CardTitle>Day {day.day} - {day.date}</CardTitle>
+                  <CardTitle>
+                    Day {day.day} - {day.date}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -228,7 +358,9 @@ const EnhancedTripViewer = ({ data }) => {
                         <div className="flex-1">
                           <div className="flex justify-between">
                             <p className="font-medium">{activity.time}</p>
-                            <span className="text-sm text-gray-500">{activity.duration}</span>
+                            <span className="text-sm text-gray-500">
+                              {activity.duration}
+                            </span>
                           </div>
                           <p className="font-medium">{activity.activity}</p>
                           <p className="text-sm text-gray-600">{activity.location}</p>
@@ -249,80 +381,11 @@ const EnhancedTripViewer = ({ data }) => {
         </TabsContent>
 
         <TabsContent value="hotels">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {tripData.hotels.map((hotel, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Hotel className="w-5 h-5 text-blue-500" />
-                    {hotel.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-gray-500" />
-                      <span>{hotel.location}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>${hotel.pricePerNight}/night</span>
-                      <span>Rating: {hotel.rating}/5</span>
-                    </div>
-                    <div>
-                      <p className="font-medium mb-2">Amenities:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {hotel.amenities.map((amenity, i) => (
-                          <span key={i} className="bg-gray-100 px-2 py-1 rounded text-sm">
-                            {amenity}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    {hotel.notes && (
-                      <p className="text-sm text-gray-600">{hotel.notes}</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <HotelsTabContent />
         </TabsContent>
 
         <TabsContent value="restaurants">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {tripData.restaurants.map((restaurant, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Utensils className="w-5 h-5 text-blue-500" />
-                    {restaurant.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-gray-500" />
-                      <span>{restaurant.location}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{restaurant.cuisine}</span>
-                      <span>{restaurant.priceRange}</span>
-                    </div>
-                    <div>
-                      <p className="font-medium mb-2">Must Try Dishes:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {restaurant.mustTryDishes.map((dish, i) => (
-                          <span key={i} className="bg-gray-100 px-2 py-1 rounded text-sm">
-                            {dish}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <RestaurantsTabContent />
         </TabsContent>
 
         <TabsContent value="transport">

@@ -14,3 +14,9 @@ after saving data to databse we should redirect to new dynamaic page eg /view-tr
 
 
 while viewing different stylings and stuffs we will create differet page for each attributes for eg.. hotelss.tsx and keep all styling for hotels there and use it as import in view trip.tsx 
+
+defiantely needs good big pic in top of the main destination and then for each hotel and resturants and for adventure place need that pic too 
+
+
+for photo url u still need google place api key  noo
+see some alternaitives for it.. kinda make all the work for free for this project  come on u can do ittt 
