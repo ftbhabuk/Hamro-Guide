@@ -1,73 +1,97 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import axios from "axios";
-
-interface TripPlan {
-  [key: string]: any;
-}
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
+// import TripDetailsPage from "@/components/TripDetailsPage";
 
 const ViewTripPage = () => {
-  const { id } = useParams();
-  const [tripPlan, setTripPlan] = useState<TripPlan | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const params = useParams();
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const tripId = params?.tripId;
 
   useEffect(() => {
-    const fetchTripPlan = async () => {
-      setIsLoading(true);
-      setError(null);
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        // **HARDCODED API KEY (FOR DEBUGGING ONLY)**
-        const apiKey =
-          "$2a$10$R6Pd/bZ7RzyKLchhTQkUPufqnPgK7tXiZOgmrbwAYDX3LapMWrnL2";
+        const apiKey = "$2a$10$R6Pd/bZ7RzyKLchhTQkUPufqnPgK7tXiZOgmrbwAYDX3LapMWrnL2";
         const response = await axios.get(
-          `https://api.jsonbin.io/v3/b/${id}`,
+          `https://api.jsonbin.io/v3/b/${tripId}`,
           {
             headers: {
               "X-Master-Key": apiKey,
             },
           }
         );
-
-        if (response.data && response.data.record) {
-          setTripPlan(response.data.record);
-        } else {
-          setError("Trip plan not found.");
-        }
-      } catch (e: any) {
-        setError(e.message || "Failed to fetch trip plan.");
+        setData(response.data);
+        setError(null);
+      } catch (err) {
+        setError(err);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    if (id) {
-      fetchTripPlan();
+    if (tripId) {
+      fetchData();
     }
-  }, [id]);
+  }, [tripId]);
 
-  if (isLoading) {
-    return <div>Loading trip plan...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
-  }
-
-  if (!tripPlan) {
-    return <div>No trip plan found.</div>;
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-100 py-6">
-      <div className="max-w-3xl mx-auto bg-white shadow-md rounded-md p-6">
-        <h1 className="text-2xl font-semibold mb-4">Trip Plan Details</h1>
-        <pre className="overflow-auto p-4 bg-gray-50 rounded">
-          {JSON.stringify(tripPlan, null, 2)}
-        </pre>
+    return (
+      <div className="p-4">
+        <Alert variant="destructive">
+          <AlertDescription>
+            Error loading trip data: {error.message}
+          </AlertDescription>
+        </Alert>
       </div>
+    );
+  }
+
+  // Only render TripDetailsPage if we have data
+  return (
+    <div className="max-w-4xl mx-auto p-4 space-y-4">
+      <h1 className="text-2xl font-bold mb-6">Trip Plan Details</h1>
+      
+      {/* {data?.record ? (
+        <TripDetailsPage tripData={data.record} />
+      ) : (
+        <Alert>
+          <AlertDescription>
+            No trip data found for ID: {tripId}
+          </AlertDescription>
+        </Alert>
+      )} */}
+
+      {/* Optional: Keep the raw JSON display for debugging */}
+      {data && (
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Raw JSON Data (Debug View)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-gray-50 p-4 rounded-lg overflow-x-auto">
+              <pre className="text-sm whitespace-pre-wrap break-words">
+                {JSON.stringify(data, null, 2)}
+              </pre>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

@@ -10,3 +10,7 @@ while trip is being generated show loading button in "generate trip"  ##will do 
 
 
 after saving data to databse we should redirect to new dynamaic page eg /view-trip[dynamic] dynamic = trip id from database 
+
+
+
+while viewing different stylings and stuffs we will create differet page for each attributes for eg.. hotelss.tsx and keep all styling for hotels there and use it as import in view trip.tsx 
