@@ -203,7 +203,7 @@ const CreateTripPage = () => {
     );
   }, []);
 
-  const storeInJsonBin = async (data: any) => {
+  const storeInJsonBin = async (data: unknown) => {
     try {
       console.log("Attempting to store data in JSONBin.io...", data);
 
@@ -290,14 +290,18 @@ const CreateTripPage = () => {
             formData,
             tripPlan: tripPlanData,
           });
+          const tripId = jsonBinResponse.metadata.id; // Get the ID
           console.log(
             "Trip plan stored in JSONBin.io with ID:",
-            jsonBinResponse.metadata.id
+            tripId
           );
           localStorage.setItem(
             "lastTripPlanBinId",
-            jsonBinResponse.metadata.id
+            tripId
           );
+
+          // Redirect to the view trip page
+          router.push(`/view-trip/${tripId}`);
         } catch (jsonBinError) {
           console.error(
             "Failed to store trip plan in JSONBin.io:",
@@ -413,21 +417,6 @@ const CreateTripPage = () => {
             </Button>
           </div>
         </form>
-
-        {tripPlan && (
-          <div className="mt-4 p-4 bg-gray-100 rounded">
-            <h3 className="text-lg font-semibold">Trip Plan Generated</h3>
-            <p className="text-sm text-gray-600">
-              Your trip plan has been generated and stored in JSONBin.io
-              {jsonBinId && ` with ID: ${jsonBinId}`}
-            </p>
-            <div className="grid gap-4 py-4">
-              <pre className="overflow-auto p-4 bg-white rounded">
-                {JSON.stringify(tripPlan, null, 2)}
-              </pre>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   );
