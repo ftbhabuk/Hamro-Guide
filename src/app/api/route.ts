@@ -1,8 +1,9 @@
-// src/app/api/plan-trip/route.ts
+// Updated route.ts file with database integration
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { nepalDatabase } from "@/lib/nepal-data";
 
 const generationConfig = {
-  temperature: 0.7, // Lowered for more consistent outputs
+  temperature: 0.7,
   topP: 0.95,
   topK: 40,
   maxOutputTokens: 8192,
@@ -24,7 +25,11 @@ export async function POST(req: Request) {
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const chatSession = model.startChat({ generationConfig });
 
-    const userPrompt = `
+    // Check if destination is in Nepal
+    const isNepalDestination = destination?.label?.toLowerCase().includes("nepal");
+
+    // Base prompt
+    let userPrompt = `
       Act as a professional travel planner. Create a detailed trip plan for the following requirements:
 
       Trip Details:
@@ -34,7 +39,51 @@ export async function POST(req: Request) {
       - Travel Group: ${travelCompanion}
       - Activities of Interest: ${selectedActivities.join(", ")}
       - Special Requirements: ${specialRequirements}
-
+    `;
+    
+    // Add Nepal-specific information if the destination is in Nepal
+    if (isNepalDestination) {
+      userPrompt += `
+      
+      Since this trip is to Nepal, use the following verified information:
+      
+      --- NEPAL VERIFIED DATA ---
+      
+      DESTINATIONS:
+      ${JSON.stringify(nepalDatabase.destinations, null, 2)}
+      
+      RECOMMENDED HOTELS:
+      ${JSON.stringify(nepalDatabase.hotels, null, 2)}
+      
+      LOCAL CUISINE:
+      ${JSON.stringify(nepalDatabase.cuisine, null, 2)}
+      
+      TRANSPORTATION OPTIONS:
+      ${JSON.stringify(nepalDatabase.transportation, null, 2)}
+      
+      CULTURAL NOTES:
+      ${JSON.stringify(nepalDatabase.culturalNotes, null, 2)}
+      
+      SAFETY TIPS:
+      ${JSON.stringify(nepalDatabase.safetyTips, null, 2)}
+      
+      EMERGENCY INFORMATION:
+      ${JSON.stringify(nepalDatabase.emergencyInfo, null, 2)}
+      
+      --- END NEPAL VERIFIED DATA ---
+      
+      Important Nepal-specific guidelines:
+      1. Incorporate the verified destinations, hotels, and cuisine in your plan
+      2. Consider seasonal factors for the itinerary
+      3. Include appropriate cultural notes and safety tips
+      4. Use the emergency information provided
+      5. Factor in transportation options and costs
+      `;
+    }
+    
+    // Add the response format requirements
+    userPrompt += `
+      
       Provide a comprehensive travel plan in a valid JSON format strictly following this structure:
 
       {
