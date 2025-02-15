@@ -28,8 +28,10 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 
-const EnhancedTripViewer = ({ data, userData }) => {
+const EnhancedTripViewer = ({ data }) => {
   const tripData = data?.record?.tripPlan;
+  const userData = data?.record?.formData?.user; // Access user data here
+
   
   if (!tripData) {
     return (
