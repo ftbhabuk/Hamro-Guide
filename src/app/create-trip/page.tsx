@@ -329,7 +329,7 @@ const CreateTripPage = () => {
   return (
     <div className="min-h-screen bg-white">
       <main className="max-w-3xl mx-auto px-6 py-8">
-        {userData && (
+        {/* {userData && (
           <div className="mb-4">
             <h2 className="text-xl font-semibold">
               Welcome, {userData.name}!
@@ -344,7 +344,7 @@ const CreateTripPage = () => {
               Logout
             </Button>
           </div>
-        )}
+        )} */}
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="space-y-2">
             <h1 className="text-3xl font-semibold text-gray-900">
