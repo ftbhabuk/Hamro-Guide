@@ -9,6 +9,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { useRouter } from "next/navigation";
 import { BUDGET_OPTIONS, COMPANION_OPTIONS, ACTIVITIES } from "./constants";
 import axios from "axios";
+import Image from "next/image";
 
 // Define types
 interface Option {
@@ -301,7 +302,12 @@ const CreateTripPage = () => {
           );
 
           // Redirect to the view trip page
-          router.push(`/view-trip/${tripId}`);
+          router.push(
+            `/view-trip/${tripId}?userData=${encodeURIComponent(
+              JSON.stringify(userData)
+            )}`
+          );
+          
         } catch (jsonBinError) {
           console.error(
             "Failed to store trip plan in JSONBin.io:",

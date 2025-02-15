@@ -23,9 +23,11 @@ import {
   ShieldAlert,
   Luggage,
 } from 'lucide-react';
+import Image from 'next/image';
 
-const EnhancedTripViewer = ({ data }) => {
+const EnhancedTripViewer = ({ data, userData }) => { // <--- ADD userData HERE
   const tripData = data?.record?.tripPlan;
+  
 
   if (!tripData) {
     return (
@@ -36,6 +38,13 @@ const EnhancedTripViewer = ({ data }) => {
       </Alert>
     );
   }
+  
+
+  // Extract the user's first name
+  const firstName = userData?.name?.split(' ')[0] || 'Traveler'; // Default to "Traveler" if no name
+  console.log('userData:', userData);
+
+  
 
   const TripOverview = () => (
     <Card className="mb-6">
@@ -209,6 +218,15 @@ const EnhancedTripViewer = ({ data }) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Hotel Image */}
+            <Image
+              src="/pokhara.jpg" // Corrected path
+              alt={Hotel.name}
+              width={600} // Adjust as needed
+              height={300} // Adjust as needed
+              className="mb-4 rounded-md w-full object-cover"
+            />
+
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-gray-500" />
@@ -272,6 +290,15 @@ const EnhancedTripViewer = ({ data }) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Restaurant Image */}
+            <Image
+              src="/pokhara.jpg" // Corrected path
+              alt={Hotel.name}
+              width={600} // Adjust as needed
+              height={300} // Adjust as needed
+              className="mb-4 rounded-md w-full object-cover"
+            />
+
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-gray-500" />
@@ -325,9 +352,22 @@ const EnhancedTripViewer = ({ data }) => {
 
   return (
     <div className="max-w-7xl mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">
-        Your Trip to {tripData.tripOverview.destination}
+      {/* Main Destination Image */}
+      <Image
+              src="/pokhara.jpg" // Corrected path
+              alt={Hotel.name}
+              width={600} // Adjust as needed
+              height={300} // Adjust as needed
+              className="mb-4 rounded-md w-full object-cover"
+            />
+
+
+<h1 className="text-3xl font-bold mb-6">
+        {firstName}, Your Trip to {tripData.tripOverview.destination}
+       
       </h1>
+      
+
 
       <TripOverview />
       <CostBreakdown />

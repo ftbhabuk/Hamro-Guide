@@ -1,23 +1,50 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from 'next/navigation'; // Use useSearchParams instead of router.query
 import axios from "axios";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
-import TripDetailsPage from "@/components/TripDetailsPage";
-import TripDetailsViewer from "@/components/TripDetailsViewer";
+import TripDetailsViewer from "@/components/TripDetailsViewer"; // Make sure this is actually EnhancedTripViewer
 
 const ViewTripPage = () => {
   const params = useParams();
+  const searchParams = useSearchParams(); // Use this instead of router.query
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState(null);
 
   const tripId = params?.tripId;
+  const userDataString = searchParams.get('userData'); // This is how you get query params in App Router
 
   useEffect(() => {
-    const fetchData = async () => { 
+    // Try to get userData from searchParams first
+    if (userDataString) {
+      try {
+        const parsedUserData = JSON.parse(decodeURIComponent(userDataString));
+        setUserData(parsedUserData);
+        console.log("Successfully parsed userData from URL:", parsedUserData);
+      } catch (error) {
+        console.error('Error parsing userData from URL:', error);
+        setUserData(null);
+      }
+    } else {
+      // Fallback: Try to get userData from localStorage if not in URL
+      const storedUserData = localStorage.getItem("user_data");
+      if (storedUserData) {
+        try {
+          setUserData(JSON.parse(storedUserData));
+          console.log("Successfully loaded userData from localStorage");
+        } catch (error) {
+          console.error('Error parsing userData from localStorage:', error);
+        }
+      }
+    }
+  }, [userDataString]);
+
+  useEffect(() => {
+    const fetchData = async () => {
       setLoading(true);
       try {
         const apiKey = "$2a$10$R6Pd/bZ7RzyKLchhTQkUPufqnPgK7tXiZOgmrbwAYDX3LapMWrnL2";
@@ -63,20 +90,18 @@ const ViewTripPage = () => {
     );
   }
 
-  // Only render TripDetailsPage if we have data
+  // Only render TripDetailsViewer if we have data
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-4">
       <h1 className="text-2xl font-bold mb-6">Trip Plan Details</h1>
-      
+
       {data ? (
-      <TripDetailsViewer data={data} />
-    ) : (
-      <Alert>
-        <AlertDescription>
-          No trip data found for ID: {tripId}
-        </AlertDescription>
-      </Alert>
-    )}
+        <TripDetailsViewer data={data} userData={userData} />
+      ) : (
+        <Alert>
+          <AlertDescription>No trip data found for ID: {tripId}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Optional: Keep the raw JSON display for debugging */}
       {data && (
