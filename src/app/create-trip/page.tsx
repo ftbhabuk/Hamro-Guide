@@ -1,13 +1,21 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useRouter } from "next/navigation";
-import { BUDGET_OPTIONS, COMPANION_OPTIONS, ACTIVITIES } from "./constants";
+import {
+  BUDGET_OPTIONS,
+  COMPANION_OPTIONS,
+  ACTIVITIES,
+} from "./constants";
 import axios from "axios";
 import Image from "next/image";
 
@@ -42,7 +50,8 @@ const BudgetSelection = ({
         What is Your Budget?
       </h2>
       <p className="text-gray-600">
-        The budget is exclusively allocated for activities and dining purposes.
+        The budget is exclusively allocated for activities and dining
+        purposes.
       </p>
     </div>
 
@@ -89,7 +98,9 @@ const CompanionSelection = ({
             {React.createElement(companion.icon, {})}
             <div>
               <h3 className="font-semibold">{companion.type}</h3>
-              <p className="text-sm text-gray-500">{companion.description}</p>
+              <p className="text-sm text-gray-500">
+                {companion.description}
+              </p>
             </div>
           </div>
         </Card>
@@ -137,8 +148,11 @@ const CreateTripPage = () => {
   const [duration, setDuration] = useState<string>("");
   const [budget, setBudget] = useState<string>("");
   const [travelCompanion, setTravelCompanion] = useState<string>("");
-  const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
-  const [specialRequirements, setSpecialRequirements] = useState<string>("");
+  const [selectedActivities, setSelectedActivities] = useState<string[]>(
+    []
+  );
+  const [specialRequirements, setSpecialRequirements] =
+    useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [tripPlan, setTripPlan] = useState<TripPlan | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -212,21 +226,31 @@ const CreateTripPage = () => {
       console.log("API Key length:", apiKey.length);
       console.log("API key starts with:", apiKey.substring(0, 10));
 
-      const response = await axios.post("https://api.jsonbin.io/v3/b", data, {
-        headers: {
-          "Content-Type": "application/json",
-          "X-Master-Key": apiKey,
-          "X-Bin-Name": `Trip Plan - ${data.formData.destination} - ${new Date().toISOString()}`,
-        },
-      });
+      const response = await axios.post(
+        "https://api.jsonbin.io/v3/b",
+        data,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "X-Master-Key": apiKey,
+            "X-Bin-Name": `Trip Plan - ${data.formData.destination} - ${new Date().toISOString()}`,
+          },
+        }
+      );
 
-      console.log("Successfully stored data in JSONBin.io:", response.data);
+      console.log(
+        "Successfully stored data in JSONBin.io:",
+        response.data
+      );
       setJsonBinId(response.data.metadata.id);
 
       // Add success message in UI
       if (response.data.metadata.id) {
         // Store the ID for later reference
-        localStorage.setItem("lastTripPlanId", response.data.metadata.id);
+        localStorage.setItem(
+          "lastTripPlanId",
+          response.data.metadata.id
+        );
       }
 
       return response.data;
@@ -283,7 +307,10 @@ const CreateTripPage = () => {
 
       if (response.data.success) {
         const tripPlanData = response.data.data;
-        console.log("Trip plan generated successfully:", tripPlanData);
+        console.log(
+          "Trip plan generated successfully:",
+          tripPlanData
+        );
         setTripPlan(tripPlanData);
 
         try {
@@ -301,13 +328,11 @@ const CreateTripPage = () => {
             tripId
           );
 
-          // Redirect to the view trip page
-          router.push(
-            `/view-trip/${tripId}?userData=${encodeURIComponent(
-              JSON.stringify(userData)
-            )}`
-          );
-          
+          // Store userData in localStorage
+          localStorage.setItem("temp_user_data", JSON.stringify(userData));
+
+          // Redirect to the view trip page, passing ONLY the tripId
+          router.push(`/view-trip/${tripId}`);
         } catch (jsonBinError) {
           console.error(
             "Failed to store trip plan in JSONBin.io:",
@@ -317,7 +342,10 @@ const CreateTripPage = () => {
 
         setOpen(true);
       } else {
-        console.error("Failed to generate trip plan:", response.data.error);
+        console.error(
+          "Failed to generate trip plan:",
+          response.data.error
+        );
       }
     } catch (error) {
       console.error("Error during API call:", error);
@@ -351,8 +379,9 @@ const CreateTripPage = () => {
               Tell us your travel preferences
             </h1>
             <p className="text-gray-600 text-lg">
-              Just provide some basic information, and our trip planner will
-              generate a customized itinerary based on your preferences.
+              Just provide some basic information, and our trip planner
+              will generate a customized itinerary based on your
+              preferences.
             </p>
           </div>
 

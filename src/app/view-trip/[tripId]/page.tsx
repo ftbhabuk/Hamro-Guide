@@ -1,53 +1,52 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useParams, useSearchParams } from 'next/navigation'; // Use useSearchParams instead of router.query
+import { useParams } from "next/navigation"; // Use useSearchParams instead of router.query
 import axios from "axios";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import TripDetailsViewer from "@/components/TripDetailsViewer"; // Make sure this is actually EnhancedTripViewer
 
 const ViewTripPage = () => {
   const params = useParams();
-  const searchParams = useSearchParams(); // Use this instead of router.query
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
 
   const tripId = params?.tripId;
-  const userDataString = searchParams.get('userData'); // This is how you get query params in App Router
 
   useEffect(() => {
-    // Try to get userData from searchParams first
-    if (userDataString) {
+    // Retrieve userData from localStorage
+    const storedUserData = localStorage.getItem("temp_user_data");
+    if (storedUserData) {
       try {
-        const parsedUserData = JSON.parse(decodeURIComponent(userDataString));
+        const parsedUserData = JSON.parse(storedUserData);
         setUserData(parsedUserData);
-        console.log("Successfully parsed userData from URL:", parsedUserData);
+        console.log(
+          "Successfully loaded userData from localStorage:",
+          parsedUserData
+        );
       } catch (error) {
-        console.error('Error parsing userData from URL:', error);
-        setUserData(null);
-      }
-    } else {
-      // Fallback: Try to get userData from localStorage if not in URL
-      const storedUserData = localStorage.getItem("user_data");
-      if (storedUserData) {
-        try {
-          setUserData(JSON.parse(storedUserData));
-          console.log("Successfully loaded userData from localStorage");
-        } catch (error) {
-          console.error('Error parsing userData from localStorage:', error);
-        }
+        console.error("Error parsing userData from localStorage:", error);
+      } finally {
+        // Remove userData from localStorage after retrieving it
+        localStorage.removeItem("temp_user_data");
       }
     }
-  }, [userDataString]);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const apiKey = "$2a$10$R6Pd/bZ7RzyKLchhTQkUPufqnPgK7tXiZOgmrbwAYDX3LapMWrnL2";
+        const apiKey =
+          "$2a$10$R6Pd/bZ7RzyKLchhTQkUPufqnPgK7tXiZOgmrbwAYDX3LapMWrnL2";
         const response = await axios.get(
           `https://api.jsonbin.io/v3/b/${tripId}`,
           {
@@ -99,7 +98,9 @@ const ViewTripPage = () => {
         <TripDetailsViewer data={data} userData={userData} />
       ) : (
         <Alert>
-          <AlertDescription>No trip data found for ID: {tripId}</AlertDescription>
+          <AlertDescription>
+            No trip data found for ID: {tripId}
+          </AlertDescription>
         </Alert>
       )}
 
