@@ -7,100 +7,78 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useRouter } from "next/navigation";
-import { BUDGET_OPTIONS, COMPANION_OPTIONS, ACTIVITIES } from "./constants";
+import {
+  BUDGET_OPTIONS,
+  COMPANION_OPTIONS,
+  ACTIVITIES,
+  ACCOMMODATION_TYPES,
+  ACTIVITY_CATEGORIES,
+  CUISINE_TYPES,
+  DIETARY_RESTRICTIONS,
+  FLEXIBILITY_OPTIONS,
+  SEASONS,
+  CURRENCIES,
+  ACTIVITY_INTENSITY,
+  Option,
+  BudgetOption,
+  CompanionOption,
+  TRANSPORTATION_TYPES,
+} from "./constants";
 import axios from "axios";
-import Image from "next/image";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format, addDays } from "date-fns";
+import { format } from "date-fns";
 import { CalendarIcon, InfoIcon } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
-// Define additional constants
-const ACCOMMODATION_TYPES = [
-  { label: "Hotel", value: "hotel" },
-  { label: "Airbnb/Rental", value: "airbnb" },
-  { label: "Hostel", value: "hostel" },
-  { label: "Resort", value: "resort" },
-  { label: "Camping", value: "camping" },
-  { label: "Stay with locals", value: "local" },
-];
+// Helper Components with Tooltips
+interface TooltipWrapperProps {
+  content: string;
+  children: React.ReactNode;
+}
 
-const TRANSPORTATION_TYPES = [
-  { label: "Public Transit", value: "publicTransit" },
-  { label: "Rental Car", value: "rentalCar" },
-  { label: "Walking/Biking", value: "walkingBiking" },
-  { label: "Rideshare/Taxi", value: "rideshare" },
-  { label: "Guided Tours", value: "guidedTours" },
-];
+const TooltipWrapper = ({ content, children }: TooltipWrapperProps) => (
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="inline-flex items-center">
+          {children}
+          <InfoIcon className="ml-1 h-4 w-4 text-gray-400" />
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p className="max-w-xs text-sm">{content}</p>
+      </TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+);
 
-const ACTIVITY_CATEGORIES = {
-  "Outdoor & Adventure": ["Hiking", "Beach", "Water Sports", "Skiing", "Wildlife"],
-  "Cultural & Historical": ["Museums", "Historical Sites", "Architecture", "Local Events"],
-  "Culinary & Nightlife": ["Fine Dining", "Street Food", "Wine Tasting", "Nightlife"],
-  "Relaxation & Wellness": ["Spa", "Yoga", "Meditation", "Hot Springs"],
-  "Shopping & Entertainment": ["Markets", "Malls", "Theater", "Concerts", "Sports Events"]
-};
+// CompanionSelection Component
+interface CompanionSelectionProps {
+  travelCompanion: string;
+  setTravelCompanion: (companion: string) => void;
+}
 
-const CUISINE_TYPES = [
-  "Local/Regional", "Italian", "Asian", "Mediterranean", 
-  "Middle Eastern", "Mexican/Latin", "Vegetarian/Vegan", 
-  "Fast Food", "Seafood", "Steakhouse", "Fusion"
-];
-
-const DIETARY_RESTRICTIONS = [
-  { id: "vegetarian", label: "Vegetarian" },
-  { id: "vegan", label: "Vegan" },
-  { id: "glutenFree", label: "Gluten-Free" },
-  { id: "dairyFree", label: "Dairy-Free" },
-  { id: "nutFree", label: "Nut-Free" },
-  { id: "kosher", label: "Kosher" },
-  { id: "halal", label: "Halal" },
-];
-
-const FLEXIBILITY_OPTIONS = [
-  { label: "Exact dates only", value: "exact" },
-  { label: "±2 days", value: "pm2days" },
-  { label: "±1 week", value: "pm1week" },
-  { label: "Very flexible", value: "veryFlexible" },
-];
-
-const SEASONS = [
-  { label: "Spring", value: "spring" },
-  { label: "Summer", value: "summer" },
-  { label: "Fall", value: "fall" },
-  { label: "Winter", value: "winter" },
-];
-
-const CURRENCIES = [
-  { label: "USD ($)", value: "USD" },
-  { label: "EUR (€)", value: "EUR" },
-  { label: "GBP (£)", value: "GBP" },
-  { label: "JPY (¥)", value: "JPY" },
-  { label: "CAD (C$)", value: "CAD" },
-  { label: "AUD (A$)", value: "AUD" },
-];
-
-const ACTIVITY_INTENSITY = [
-  { label: "Relaxed (lots of downtime)", value: "relaxed" },
-  { label: "Moderate (balanced pace)", value: "moderate" },
-  { label: "Action-packed (busy itinerary)", value: "actionPacked" },
-];
 const CompanionSelection = ({
   travelCompanion,
   setTravelCompanion,
-}) => {
+}: CompanionSelectionProps) => {
   return (
     <div className="space-y-2">
       <TooltipWrapper content="Are you traveling solo, with a partner, family, or friends?">
@@ -126,50 +104,30 @@ const CompanionSelection = ({
   );
 };
 
-
-// Define types
-interface Option {
-  label: string;
-  value: string;
-}
-
-interface BudgetOption {
-  level: string;
-  range: string;
-}
-
-interface CompanionOption {
-  type: string;
-  icon: React.FC;
-  description: string;
-}
-
-// Helper Components with Tooltips
-const TooltipWrapper = ({ content, children }) => (
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="inline-flex items-center">
-          {children}
-          <InfoIcon className="ml-1 h-4 w-4 text-gray-400" />
-        </div>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p className="max-w-xs text-sm">{content}</p>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-);
-
 // New and updated components
+interface TravelDatesSelectionProps {
+  startDate: Date | null;
+  setStartDate: (date: Date | null) => void;
+  endDate: Date | null;
+  setEndDate: (date: Date | null) => void;
+  dateFlexibility: string;
+  setDateFlexibility: (flexibility: string) => void;
+  preferredSeason: string;
+  setPreferredSeason: (season: string) => void;
+}
+
 const TravelDatesSelection = ({
-  startDate, setStartDate,
-  endDate, setEndDate,
-  dateFlexibility, setDateFlexibility,
-  preferredSeason, setPreferredSeason
-}) => {
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
+  dateFlexibility,
+  setDateFlexibility,
+  preferredSeason,
+  setPreferredSeason,
+}: TravelDatesSelectionProps) => {
   const [showDatePicker, setShowDatePicker] = useState(true);
-  
+
   useEffect(() => {
     // If very flexible is selected, hide date picker and show season selector
     if (dateFlexibility === "veryFlexible") {
@@ -183,7 +141,9 @@ const TravelDatesSelection = ({
     <div className="space-y-4">
       <div className="space-y-1">
         <TooltipWrapper content="Let us know when you plan to travel. This helps us suggest seasonal activities and events.">
-          <h2 className="text-lg font-medium text-gray-900">Travel Timing</h2>
+          <h2 className="text-lg font-medium text-gray-900">
+            Travel Timing
+          </h2>
         </TooltipWrapper>
       </div>
 
@@ -200,7 +160,11 @@ const TravelDatesSelection = ({
                       className="w-full justify-start text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, "PPP") : <span>Pick a start date</span>}
+                      {startDate ? (
+                        format(startDate, "PPP")
+                      ) : (
+                        <span>Pick a start date</span>
+                      )}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -223,7 +187,11 @@ const TravelDatesSelection = ({
                       className="w-full justify-start text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, "PPP") : <span>Pick an end date</span>}
+                      {endDate ? (
+                        format(endDate, "PPP")
+                      ) : (
+                        <span>Pick an end date</span>
+                      )}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -289,6 +257,17 @@ const TravelDatesSelection = ({
   );
 };
 
+interface BudgetSelectionProps {
+  budget: string;
+  setBudget: (budget: string) => void;
+  currency: string;
+  setCurrency: (currency: string) => void;
+  budgetIncludes: string;
+  setBudgetIncludes: (includes: string) => void;
+  splurgeCategories: string[];
+  setSplurgeCategories: (categories: string[]) => void;
+}
+
 const BudgetSelection = ({
   budget,
   setBudget,
@@ -298,111 +277,142 @@ const BudgetSelection = ({
   setBudgetIncludes,
   splurgeCategories,
   setSplurgeCategories,
-}) => (
-  <div className="space-y-4">
-    <div className="space-y-1">
-      <TooltipWrapper content="Your budget helps us recommend appropriate accommodations, dining options, and activities.">
-        <h2 className="text-lg font-medium text-gray-900">Budget Details</h2>
-      </TooltipWrapper>
-      <p className="text-gray-600">
-        Help us understand your spending preferences.
-      </p>
-    </div>
-
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {BUDGET_OPTIONS.map((option) => (
-        <Card
-          key={option.level}
-          className={`p-4 cursor-pointer transition-colors ${
-            budget === option.level ? "border-blue-500" : ""
-          }`}
-          onClick={() => setBudget(option.level)}
+}: BudgetSelectionProps) => {
+  return (
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <TooltipWrapper
+          content="Your budget helps us recommend appropriate accommodations, dining options, and activities."
         >
-          <div>
-            <h3 className="font-semibold">{option.level}</h3>
-            <p className="text-sm text-gray-500">{option.range}</p>
-          </div>
-        </Card>
-      ))}
-    </div>
-
-    <div className="flex gap-4 flex-col sm:flex-row">
-      <div className="w-full sm:w-1/2">
-        <TooltipWrapper content="Select the currency you'll be using for your budget.">
-          <Label className="mb-2 block">Currency</Label>
+          <h2 className="text-lg font-medium text-gray-900">Budget Details</h2>
         </TooltipWrapper>
-        <Select value={currency} onValueChange={setCurrency}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select currency" />
-          </SelectTrigger>
-          <SelectContent>
-            {CURRENCIES.map((curr) => (
-              <SelectItem key={curr.value} value={curr.value}>
-                {curr.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <p className="text-gray-600">
+          Help us understand your spending preferences.
+        </p>
       </div>
 
-      <div className="w-full sm:w-1/2">
-        <TooltipWrapper content="Let us know if your budget includes transportation to your destination.">
-          <Label className="mb-2 block">Your budget includes:</Label>
-        </TooltipWrapper>
-        <Select value={budgetIncludes} onValueChange={setBudgetIncludes}>
-          <SelectTrigger>
-            <SelectValue placeholder="What does your budget include?" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="everything">Everything (inc. flights/transport to destination)</SelectItem>
-            <SelectItem value="excludeTransport">Excludes transport to destination</SelectItem>
-            <SelectItem value="onlyAtDestination">Only at-destination expenses</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-
-    <div className="space-y-2">
-      <TooltipWrapper content="Tell us where you'd be willing to spend more for a premium experience.">
-        <Label className="mb-2 block">Where would you prefer to splurge? (Select all that apply)</Label>
-      </TooltipWrapper>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {["Accommodation", "Dining", "Activities", "Transportation", "Shopping", "Nightlife"].map((category) => (
-          <div key={category} className="flex items-center space-x-2">
-            <Checkbox
-              id={`splurge-${category}`}
-              checked={splurgeCategories.includes(category)}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  setSplurgeCategories([...splurgeCategories, category]);
-                } else {
-                  setSplurgeCategories(splurgeCategories.filter(item => item !== category));
-                }
-              }}
-            />
-            <label
-              htmlFor={`splurge-${category}`}
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              {category}
-            </label>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {BUDGET_OPTIONS.map((option) => (
+          <Card
+            key={option.level}
+            className={`p-4 cursor-pointer transition-colors ${
+              budget === option.level ? "border-blue-500" : ""
+            }`}
+            onClick={() => setBudget(option.level)}
+          >
+            <div>
+              <h3 className="font-semibold">{option.level}</h3>
+              <p className="text-sm text-gray-500">{option.range}</p>
+            </div>
+          </Card>
         ))}
       </div>
+
+      <div className="flex gap-4 flex-col sm:flex-row">
+        <div className="w-full sm:w-1/2">
+          <TooltipWrapper content="Select the currency you'll be using for your budget.">
+            <Label className="mb-2 block">Currency</Label>
+          </TooltipWrapper>
+          <Select value={currency} onValueChange={setCurrency}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select currency" />
+            </SelectTrigger>
+            <SelectContent>
+              {CURRENCIES.map((curr) => (
+                <SelectItem key={curr.value} value={curr.value}>
+                  {curr.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-full sm:w-1/2">
+          <TooltipWrapper content="Let us know if your budget includes transportation to your destination.">
+            <Label className="mb-2 block">Your budget includes:</Label>
+          </TooltipWrapper>
+          <Select value={budgetIncludes} onValueChange={setBudgetIncludes}>
+            <SelectTrigger>
+              <SelectValue placeholder="What does your budget include?" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="everything">
+                Everything (inc. flights/transport to destination)
+              </SelectItem>
+              <SelectItem value="excludeTransport">
+                Excludes transport to destination
+              </SelectItem>
+              <SelectItem value="onlyAtDestination">
+                Only at-destination expenses
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <TooltipWrapper content="Tell us where you'd be willing to spend more for a premium experience.">
+          <Label className="mb-2 block">
+            Where would you prefer to splurge? (Select all that apply)
+          </Label>
+        </TooltipWrapper>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {[
+            "Accommodation",
+            "Dining",
+            "Activities",
+            "Transportation",
+            "Shopping",
+            "Nightlife",
+          ].map((category) => (
+            <div key={category} className="flex items-center space-x-2">
+              <Checkbox
+                id={`splurge-${category}`}
+                checked={splurgeCategories.includes(category)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSplurgeCategories([...splurgeCategories, category]);
+                  } else {
+                    setSplurgeCategories(
+                      splurgeCategories.filter((item) => item !== category)
+                    );
+                  }
+                }}
+              />
+              <label
+                htmlFor={`splurge-${category}`}
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                {category}
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
+
+
+interface AccommodationPreferencesProps {
+  accommodationType: string;
+  setAccommodationType: (type: string) => void;
+  locationPreference: string;
+  setLocationPreference: (preference: string) => void;
+}
 
 const AccommodationPreferences = ({
   accommodationType,
   setAccommodationType,
   locationPreference,
-  setLocationPreference
-}) => (
+  setLocationPreference,
+}: AccommodationPreferencesProps) => (
   <div className="space-y-4">
     <div className="space-y-1">
       <TooltipWrapper content="Your accommodation preferences help us suggest suitable places to stay.">
-        <h2 className="text-lg font-medium text-gray-900">Accommodation Preferences</h2>
+        <h2 className="text-lg font-medium text-gray-900">
+          Accommodation Preferences
+        </h2>
       </TooltipWrapper>
     </div>
 
@@ -427,7 +437,9 @@ const AccommodationPreferences = ({
 
     <div className="space-y-2">
       <TooltipWrapper content="Let us know if you prefer to stay in particular areas.">
-        <Label className="mb-2 block">Preferred Location/Neighborhood</Label>
+        <Label className="mb-2 block">
+          Preferred Location/Neighborhood
+        </Label>
       </TooltipWrapper>
       <div className="flex flex-col space-y-2">
         <Textarea
@@ -436,25 +448,37 @@ const AccommodationPreferences = ({
           onChange={(e) => setLocationPreference(e.target.value)}
           className="h-20"
         />
-        <p className="text-sm text-gray-500 italic">Example: "I prefer to stay in the historic district" or "I'd like to be within walking distance to major attractions"</p>
+        <p className="text-sm text-gray-500 italic">
+          Example: "I prefer to stay in the historic district" or "I'd like to
+          be within walking distance to major attractions"
+        </p>
       </div>
     </div>
   </div>
 );
 
+interface TransportationPreferencesProps {
+  transportationTypes: string[];
+  setTransportationTypes: (types: string[]) => void;
+}
+
 const TransportationPreferences = ({
   transportationTypes,
-  setTransportationTypes
-}) => (
+  setTransportationTypes,
+}: TransportationPreferencesProps) => (
   <div className="space-y-4">
     <div className="space-y-1">
       <TooltipWrapper content="Your transportation preferences help us suggest suitable ways to get around.">
-        <h2 className="text-lg font-medium text-gray-900">Transportation Preferences</h2>
+        <h2 className="text-lg font-medium text-gray-900">
+          Transportation Preferences
+        </h2>
       </TooltipWrapper>
     </div>
 
     <div className="space-y-2">
-      <Label className="mb-2 block">How do you prefer to get around? (Select all that apply)</Label>
+      <Label className="mb-2 block">
+        How do you prefer to get around? (Select all that apply)
+      </Label>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {TRANSPORTATION_TYPES.map((option) => (
           <div key={option.value} className="flex items-center space-x-2">
@@ -465,7 +489,9 @@ const TransportationPreferences = ({
                 if (checked) {
                   setTransportationTypes([...transportationTypes, option.value]);
                 } else {
-                  setTransportationTypes(transportationTypes.filter(item => item !== option.value));
+                  setTransportationTypes(
+                    transportationTypes.filter((item) => item !== option.value)
+                  );
                 }
               }}
             />
@@ -481,6 +507,14 @@ const TransportationPreferences = ({
     </div>
   </div>
 );
+interface ActivityPreferencesDepthProps {
+  activityIntensity: string;
+  setActivityIntensity: (intensity: string) => void;
+  selectedActivities: string[];
+  toggleActivity: (activity: string) => void;
+  mustSeeAttractions: string;
+  setMustSeeAttractions: (attractions: string) => void;
+}
 
 const ActivityPreferencesDepth = ({
   activityIntensity,
@@ -488,12 +522,14 @@ const ActivityPreferencesDepth = ({
   selectedActivities,
   toggleActivity,
   mustSeeAttractions,
-  setMustSeeAttractions
-}) => (
+  setMustSeeAttractions,
+}: ActivityPreferencesDepthProps) => (
   <div className="space-y-4">
     <div className="space-y-1">
       <TooltipWrapper content="This helps us understand what activities to prioritize in your itinerary.">
-        <h2 className="text-lg font-medium text-gray-900">Activity Preferences</h2>
+        <h2 className="text-lg font-medium text-gray-900">
+          Activity Preferences
+        </h2>
       </TooltipWrapper>
     </div>
 
@@ -511,7 +547,7 @@ const ActivityPreferencesDepth = ({
 
     <div className="space-y-3">
       <Label className="block">Preferred Activities by Category</Label>
-      
+
       <Tabs defaultValue="Outdoor & Adventure" className="w-full">
         <TabsList className="grid grid-cols-2 lg:grid-cols-5">
           {Object.keys(ACTIVITY_CATEGORIES).map((category) => (
@@ -520,20 +556,24 @@ const ActivityPreferencesDepth = ({
             </TabsTrigger>
           ))}
         </TabsList>
-        
+
         {Object.entries(ACTIVITY_CATEGORIES).map(([category, activities]) => (
           <TabsContent key={category} value={category} className="pt-4">
             <div className="flex flex-wrap gap-2">
               {activities.map((activity) => (
                 <Button
                   key={activity}
+                  type="button"
                   variant="outline"
                   className={`rounded-full ${
                     selectedActivities.includes(activity)
                       ? "bg-blue-100 border-blue-500"
                       : ""
                   }`}
-                  onClick={() => toggleActivity(activity)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleActivity(activity);
+                  }}
                 >
                   {activity}
                 </Button>
@@ -546,7 +586,9 @@ const ActivityPreferencesDepth = ({
 
     <div className="space-y-2">
       <TooltipWrapper content="List any specific attractions or activities you don't want to miss.">
-        <Label className="mb-2 block">Must-See Attractions or Activities</Label>
+        <Label className="mb-2 block">
+          Must-See Attractions or Activities
+        </Label>
       </TooltipWrapper>
       <Textarea
         placeholder="E.g., Eiffel Tower in Paris, Grand Canyon in Arizona..."
@@ -554,10 +596,22 @@ const ActivityPreferencesDepth = ({
         onChange={(e) => setMustSeeAttractions(e.target.value)}
         className="h-20"
       />
-      <p className="text-sm text-gray-500 italic">Example: "I definitely want to visit the Louvre" or "Hiking in the national park is a must for us"</p>
+      <p className="text-sm text-gray-500 italic">
+        Example: "I definitely want to visit the Louvre" or "Hiking in the
+        national park is a must for us"
+      </p>
     </div>
   </div>
 );
+
+interface DiningPreferencesProps {
+  cuisineTypes: string[];
+  setCuisineTypes: (types: string[]) => void;
+  diningStyles: string[];
+  setDiningStyles: (styles: string[]) => void;
+  dietaryRestrictions: string[];
+  setDietaryRestrictions: (restrictions: string[]) => void;
+}
 
 const DiningPreferences = ({
   cuisineTypes,
@@ -565,32 +619,38 @@ const DiningPreferences = ({
   diningStyles,
   setDiningStyles,
   dietaryRestrictions,
-  setDietaryRestrictions
-}) => (
+  setDietaryRestrictions,
+}: DiningPreferencesProps) => (
   <div className="space-y-4">
     <div className="space-y-1">
       <TooltipWrapper content="Your dining preferences help us suggest suitable restaurants and food experiences.">
-        <h2 className="text-lg font-medium text-gray-900">Dining Preferences</h2>
+        <h2 className="text-lg font-medium text-gray-900">
+          Dining Preferences
+        </h2>
       </TooltipWrapper>
     </div>
 
     <div className="space-y-2">
       <TooltipWrapper content="Select the types of cuisine you enjoy or want to try.">
-        <Label className="mb-2 block">Preferred Cuisine Types (Select all that apply)</Label>
+        <Label className="mb-2 block">
+          Preferred Cuisine Types (Select all that apply)
+        </Label>
       </TooltipWrapper>
       <div className="flex flex-wrap gap-2">
         {CUISINE_TYPES.map((cuisine) => (
           <Button
             key={cuisine}
+            type="button"
             variant="outline"
             className={`rounded-full ${
               cuisineTypes.includes(cuisine)
                 ? "bg-blue-100 border-blue-500"
                 : ""
             }`}
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
               if (cuisineTypes.includes(cuisine)) {
-                setCuisineTypes(cuisineTypes.filter(c => c !== cuisine));
+                setCuisineTypes(cuisineTypes.filter((c) => c !== cuisine));
               } else {
                 setCuisineTypes([...cuisineTypes, cuisine]);
               }
@@ -604,24 +664,33 @@ const DiningPreferences = ({
 
     <div className="space-y-2">
       <TooltipWrapper content="Select your preferred dining environments and styles.">
-        <Label className="mb-2 block">Preferred Dining Styles (Select all that apply)</Label>
+        <Label className="mb-2 block">
+          Preferred Dining Styles (Select all that apply)
+        </Label>
       </TooltipWrapper>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        {["Street Food", "Casual Dining", "Fine Dining", "Local Eateries", "Food Tours", "Cooking Classes"].map((style) => (
+        {[
+          "Street Food",
+          "Casual Dining",
+          "Fine Dining",
+          "Local Eateries",
+          "Food Tours",
+          "Cooking Classes",
+        ].map((style) => (
           <div key={style} className="flex items-center space-x-2">
             <Checkbox
-              id={`dining-${style.replace(/\s+/g, '')}`}
+              id={`dining-${style.replace(/\s+/g, "")}`}
               checked={diningStyles.includes(style)}
               onCheckedChange={(checked) => {
                 if (checked) {
                   setDiningStyles([...diningStyles, style]);
                 } else {
-                  setDiningStyles(diningStyles.filter(s => s !== style));
+                  setDiningStyles(diningStyles.filter((s) => s !== style));
                 }
               }}
             />
             <label
-              htmlFor={`dining-${style.replace(/\s+/g, '')}`}
+              htmlFor={`dining-${style.replace(/\s+/g, "")}`}
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               {style}
@@ -633,7 +702,9 @@ const DiningPreferences = ({
 
     <div className="space-y-2">
       <TooltipWrapper content="Let us know about any dietary restrictions so we can suggest appropriate dining options.">
-        <Label className="mb-2 block">Dietary Restrictions (Select all that apply)</Label>
+        <Label className="mb-2 block">
+          Dietary Restrictions (Select all that apply)
+        </Label>
       </TooltipWrapper>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
         {DIETARY_RESTRICTIONS.map((restriction) => (
@@ -645,7 +716,9 @@ const DiningPreferences = ({
                 if (checked) {
                   setDietaryRestrictions([...dietaryRestrictions, restriction.id]);
                 } else {
-                  setDietaryRestrictions(dietaryRestrictions.filter(r => r !== restriction.id));
+                  setDietaryRestrictions(
+                    dietaryRestrictions.filter((r) => r !== restriction.id)
+                  );
                 }
               }}
             />
@@ -662,16 +735,25 @@ const DiningPreferences = ({
   </div>
 );
 
+interface TimeAllocationPreferencesProps {
+  structuredVsFreeTime: string;
+  setStructuredVsFreeTime: (time: string) => void;
+  morningVsEveningPerson: string;
+  setMorningVsEveningPerson: (person: string) => void;
+}
+
 const TimeAllocationPreferences = ({
   structuredVsFreeTime,
   setStructuredVsFreeTime,
   morningVsEveningPerson,
-  setMorningVsEveningPerson
-}) => (
+  setMorningVsEveningPerson,
+}: TimeAllocationPreferencesProps) => (
   <div className="space-y-4">
     <div className="space-y-1">
       <TooltipWrapper content="This helps us balance your itinerary between planned activities and free time.">
-        <h2 className="text-lg font-medium text-gray-900">Time Allocation Preferences</h2>
+        <h2 className="text-lg font-medium text-gray-900">
+          Time Allocation Preferences
+        </h2>
       </TooltipWrapper>
     </div>
 
@@ -680,15 +762,21 @@ const TimeAllocationPreferences = ({
       <RadioGroup value={structuredVsFreeTime} onValueChange={setStructuredVsFreeTime}>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="mostlyStructured" id="mostly-structured" />
-          <Label htmlFor="mostly-structured">Mostly structured (guided tours, planned activities)</Label>
+          <Label htmlFor="mostly-structured">
+            Mostly structured (guided tours, planned activities)
+          </Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="balancedMix" id="balanced-mix" />
-          <Label htmlFor="balanced-mix">Balanced mix of structured activities and free time</Label>
+          <Label htmlFor="balanced-mix">
+            Balanced mix of structured activities and free time
+          </Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="mostlyFreeTime" id="mostly-free-time" />
-          <Label htmlFor="mostly-free-time">Mostly free time with few planned activities</Label>
+          <Label htmlFor="mostly-free-time">
+            Mostly free time with few planned activities
+          </Label>
         </div>
       </RadioGroup>
     </div>
@@ -698,11 +786,15 @@ const TimeAllocationPreferences = ({
       <RadioGroup value={morningVsEveningPerson} onValueChange={setMorningVsEveningPerson}>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="morningPerson" id="morning-person" />
-          <Label htmlFor="morning-person">Morning person (early starts, earlier dinners)</Label>
+          <Label htmlFor="morning-person">
+            Morning person (early starts, earlier dinners)
+          </Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="eveningPerson" id="evening-person" />
-          <Label htmlFor="evening-person">Evening person (later starts, nightlife)</Label>
+          <Label htmlFor="evening-person">
+            Evening person (later starts, nightlife)
+          </Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="flexible" id="time-flexible" />
@@ -728,7 +820,7 @@ const CreateTripPage = () => {
   const [open, setOpen] = useState(false);
   const [userData, setUserData] = useState<any>(null);
   const [jsonBinId, setJsonBinId] = useState<string | null>(null);
-  
+
   // New state for additional features
   const [currentStep, setCurrentStep] = useState(1);
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -737,7 +829,7 @@ const CreateTripPage = () => {
   const [preferredSeason, setPreferredSeason] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [budgetIncludes, setBudgetIncludes] = useState("");
-  const [splurgeCategories, setSplurgeCategories] = useState<string[]>([]);
+  const [splurgeCategories , setSplurgeCategories] = useState<string[]>([]);
   const [accommodationType, setAccommodationType] = useState("");
   const [locationPreference, setLocationPreference] = useState("");
   const [transportationTypes, setTransportationTypes] = useState<string[]>([]);
@@ -856,9 +948,9 @@ const CreateTripPage = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const generateTrip = async () => {
+    // Move the contents of the handleSubmit function here
+    // but without the e.preventDefault() at the beginning
     if (!isLoggedIn) {
       console.log("Redirecting to login...");
       login();
@@ -1227,9 +1319,10 @@ const CreateTripPage = () => {
                   onChange={(e) => setSpecialRequirements(e.target.value)}
                 />
                 <p className="text-sm text-gray-500 italic">
-                  Examples: "I need wheelchair-accessible accommodations", "I prefer female tour guides", 
-                  "I want to attend a local festival", "I'm traveling with a pet", etc.
+                  Examples: &quot;I need wheelchair-accessible accommodations&quot;, &quot;I prefer female tour guides&quot;,
+                  &quot;I want to attend a local festival&quot;, I&apos;m traveling with a pet, etc.
                 </p>
+
               </div>
 
               <div className="bg-blue-50 p-4 rounded-md">
@@ -1259,9 +1352,10 @@ const CreateTripPage = () => {
                 Back
               </Button>
               <Button
-                type="submit"
+                type="button"
                 className="h-12 text-lg bg-red-600 hover:bg-red-700 text-white"
                 disabled={isLoading}
+                onClick={generateTrip}
               >
                 {isLoading ? "Generating..." : "Generate My Trip"}
               </Button>
@@ -1313,7 +1407,7 @@ const CreateTripPage = () => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form className="space-y-8">
           {renderStep()}
         </form>
       </main>
@@ -1322,3 +1416,4 @@ const CreateTripPage = () => {
 };
 
 export default CreateTripPage;
+

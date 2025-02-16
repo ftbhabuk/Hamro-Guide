@@ -73,6 +73,23 @@ export async function POST(req: Request) {
       travelCompanion,
       selectedActivities = [],
       specialRequirements = "",
+      startDate,
+      endDate,
+      dateFlexibility,
+      preferredSeason,
+      currency,
+      budgetIncludes,
+      splurgeCategories,
+      accommodationType,
+      locationPreference,
+      transportationTypes,
+      activityIntensity,
+      mustSeeAttractions,
+      cuisineTypes,
+      diningStyles,
+      dietaryRestrictions,
+      structuredVsFreeTime,
+      morningVsEveningPerson,
       user: userData,
     } = await req.json();
 
@@ -129,6 +146,23 @@ export async function POST(req: Request) {
       - Travel Group: ${travelCompanion}
       - Activities of Interest: ${activitiesString}
       - Special Requirements: ${specialRequirements}
+      - Start Date: ${startDate}
+      - End Date: ${endDate}
+      - Date Flexibility: ${dateFlexibility}
+      - Preferred Season: ${preferredSeason}
+      - Currency: ${currency}
+      - Budget Includes: ${budgetIncludes}
+      - Splurge Categories: ${splurgeCategories.join(", ")}
+      - Accommodation Type: ${accommodationType}
+      - Location Preference: ${locationPreference}
+      - Transportation Types: ${transportationTypes.join(", ")}
+      - Activity Intensity: ${activityIntensity}
+      - Must See Attractions: ${mustSeeAttractions}
+      - Cuisine Types: ${cuisineTypes.join(", ")}
+      - Dining Styles: ${diningStyles.join(", ")}
+      - Dietary Restrictions: ${dietaryRestrictions.join(", ")}
+      - Structured vs Free Time: ${structuredVsFreeTime}
+      - Morning vs Evening Person: ${morningVsEveningPerson}
     `;
 
     if (matchedDestination) {

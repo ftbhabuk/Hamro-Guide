@@ -1,14 +1,14 @@
-import React from 'react';
+import React from "react";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
   CardDescription,
-} from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Hotel,
   MapPin,
@@ -24,12 +24,17 @@ import {
   Luggage,
   Info,
   Camera,
-} from 'lucide-react';
+} from "lucide-react";
 
-const EnhancedTripViewer = ({ data }) => {
+interface TripDetailViewerProps {
+  data: any; // Replace 'any' with a more specific type if possible
+}
+
+const TripDetailViewer: React.FC<TripDetailViewerProps> = ({ data }) => {
   const tripData = data?.record?.tripPlan;
-  const userData = data?.record?.formData?.user;
-  
+  const formData = data?.record?.formData; // Get the entire formData
+  const userData = formData?.user;
+
   if (!tripData) {
     return (
       <Alert>
@@ -39,11 +44,13 @@ const EnhancedTripViewer = ({ data }) => {
       </Alert>
     );
   }
-  
-  const firstName = userData?.name?.split(' ')[0] || 'Traveler';
-  
-  const createGoogleMapsUrl = (query) => {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+
+  const firstName = userData?.name?.split(" ")[0] || "Traveler";
+
+  const createGoogleMapsUrl = (query: string) => {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      query
+    )}`;
   };
 
   const TripOverview = () => (
@@ -56,7 +63,9 @@ const EnhancedTripViewer = ({ data }) => {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
           <div className="p-6 text-white">
-            <h2 className="text-2xl font-bold">{tripData.tripOverview.destination}</h2>
+            <h2 className="text-2xl font-bold">
+              {tripData.tripOverview.destination}
+            </h2>
             <p className="text-sm opacity-80">{tripData.tripOverview.weatherInfo}</p>
           </div>
         </div>
@@ -77,6 +86,19 @@ const EnhancedTripViewer = ({ data }) => {
               <p className="font-medium">{tripData.tripOverview.duration} days</p>
             </div>
           </div>
+          {/* Display Start and End Dates */}
+          {formData.startDate && formData.endDate && (
+            <div className="flex items-center gap-3">
+              <Calendar className="w-5 h-5 text-indigo-500" />
+              <div>
+                <p className="text-sm text-gray-500">Dates</p>
+                <p className="font-medium">
+                  {new Date(formData.startDate).toLocaleDateString()} -{" "}
+                  {new Date(formData.endDate).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <Sun className="w-5 h-5 text-indigo-500" />
             <div>
@@ -109,7 +131,10 @@ const EnhancedTripViewer = ({ data }) => {
       <CardContent className="pt-6 bg-white">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {Object.entries(tripData.costBreakdown).map(([category, cost]) => (
-            <div key={category} className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow">
+            <div
+              key={category}
+              className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow"
+            >
               <p className="text-sm text-gray-500 capitalize">{category}</p>
               <p className="text-lg font-semibold">${cost}</p>
             </div>
@@ -141,7 +166,9 @@ const EnhancedTripViewer = ({ data }) => {
             {tripData.transportation.fromAirport.options.map((option, index) => (
               <a
                 key={index}
-                href={createGoogleMapsUrl(`${option} ${tripData.tripOverview.destination} airport transfer`)}
+                href={createGoogleMapsUrl(
+                  `${option} ${tripData.tripOverview.destination} airport transfer`
+                )}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group"
@@ -155,10 +182,14 @@ const EnhancedTripViewer = ({ data }) => {
                     />
                   </div>
                   <div className="p-4">
-                    <h3 className="font-medium text-indigo-600 group-hover:text-indigo-700">{option}</h3>
+                    <h3 className="font-medium text-indigo-600 group-hover:text-indigo-700">
+                      {option}
+                    </h3>
                     <div className="flex justify-between items-center mt-2">
                       <span className="text-sm text-gray-600">Estimated cost</span>
-                      <span className="font-semibold">${tripData.transportation.fromAirport.estimatedCosts[index]}</span>
+                      <span className="font-semibold">
+                        ${tripData.transportation.fromAirport.estimatedCosts[index]}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -167,7 +198,7 @@ const EnhancedTripViewer = ({ data }) => {
           </div>
         </CardContent>
       </Card>
-      
+
       <Card className="border-none shadow-md overflow-hidden">
         <div className="bg-gradient-to-r from-purple-500 to-blue-600 text-white">
           <CardHeader>
@@ -196,10 +227,14 @@ const EnhancedTripViewer = ({ data }) => {
                     />
                   </div>
                   <div className="p-4">
-                    <h3 className="font-medium text-indigo-600 group-hover:text-indigo-700">{option}</h3>
+                    <h3 className="font-medium text-indigo-600 group-hover:text-indigo-700">
+                      {option}
+                    </h3>
                     <div className="flex justify-between items-center mt-2">
                       <span className="text-sm text-gray-600">Estimated cost</span>
-                      <span className="font-semibold">${tripData.transportation.localTransport.estimatedCosts[index]}</span>
+                      <span className="font-semibold">
+                        ${tripData.transportation.localTransport.estimatedCosts[index]}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -225,19 +260,21 @@ const EnhancedTripViewer = ({ data }) => {
           </div>
           <CardContent className="pt-4 bg-white">
             <div className="space-y-2">
-              {Object.entries(tripData.essentialInfo.emergencyContacts).map(([
-                service,
-                contact,
-              ]) => (
-                <div key={service} className="flex justify-between py-2 border-b last:border-0">
-                  <span className="capitalize">{service}:</span>
-                  <span className="font-medium">{contact}</span>
-                </div>
-              ))}
+              {Object.entries(tripData.essentialInfo.emergencyContacts).map(
+                ([service, contact]) => (
+                  <div
+                    key={service}
+                    className="flex justify-between py-2 border-b last:border-0"
+                  >
+                    <span className="capitalize">{service}:</span>
+                    <span className="font-medium">{contact}</span>
+                  </div>
+                )
+              )}
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="border-none shadow-md overflow-hidden">
           <div className="bg-gradient-to-r from-green-500 to-teal-600 text-white">
             <CardHeader>
@@ -256,7 +293,7 @@ const EnhancedTripViewer = ({ data }) => {
           </CardContent>
         </Card>
       </div>
-      
+
       <Card className="border-none shadow-md overflow-hidden">
         <div className="relative h-48 w-full">
           <img
@@ -307,7 +344,10 @@ const EnhancedTripViewer = ({ data }) => {
   const HotelsTabContent = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {tripData.hotels.map((hotel, index) => (
-        <Card key={index} className="overflow-hidden group hover:shadow-lg transition-shadow border-none shadow-md">
+        <Card
+          key={index}
+          className="overflow-hidden group hover:shadow-lg transition-shadow border-none shadow-md"
+        >
           <div className="relative h-48 w-full">
             <img
               src="/pokhara.jpg"
@@ -318,7 +358,7 @@ const EnhancedTripViewer = ({ data }) => {
               ${hotel.pricePerNight}/night
             </div>
           </div>
-          
+
           <CardHeader className="bg-white">
             <CardTitle className="flex items-center gap-2">
               <Hotel className="w-5 h-5 text-indigo-500" />
@@ -336,36 +376,51 @@ const EnhancedTripViewer = ({ data }) => {
               </a>
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="bg-white">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-1">
                   {[...Array(Math.floor(hotel.rating))].map((_, i) => (
-                    <svg key={i} className="w-4 h-4 text-yellow-400 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <svg
+                      key={i}
+                      className="w-4 h-4 text-yellow-400 fill-current"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                    >
                       <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                     </svg>
                   ))}
                   {hotel.rating % 1 !== 0 && (
-                    <svg className="w-4 h-4 text-yellow-400 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fillOpacity="0.5" />
+                    <svg
+                      className="w-4 h-4 text-yellow-400 fill-current"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+                        fillOpacity="0.5"
+                      />
                     </svg>
                   )}
                   <span className="ml-1 text-sm text-gray-600">{hotel.rating}/5</span>
                 </div>
               </div>
-              
+
               <div>
                 <p className="font-medium mb-2">Amenities:</p>
                 <div className="flex flex-wrap gap-2">
                   {hotel.amenities.map((amenity, i) => (
-                    <span key={i} className="bg-indigo-50 px-2 py-1 rounded text-sm text-indigo-700">
+                    <span
+                      key={i}
+                      className="bg-indigo-50 px-2 py-1 rounded text-sm text-indigo-700"
+                    >
                       {amenity}
                     </span>
                   ))}
                 </div>
               </div>
-              
+
               {hotel.notes && <p className="text-sm text-gray-600">{hotel.notes}</p>}
 
               <Button
@@ -373,7 +428,7 @@ const EnhancedTripViewer = ({ data }) => {
                 className="w-full mt-2 font-semibold shadow-sm group-hover:bg-indigo-50 text-indigo-700 border-indigo-200"
                 onClick={() => {
                   const availabilityQuery = `${hotel.name} in ${hotel.location}`;
-                  window.open(createGoogleMapsUrl(availabilityQuery), '_blank');
+                  window.open(createGoogleMapsUrl(availabilityQuery), "_blank");
                 }}
               >
                 Check Availability
@@ -388,7 +443,10 @@ const EnhancedTripViewer = ({ data }) => {
   const RestaurantsTabContent = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {tripData.restaurants.map((restaurant, index) => (
-        <Card key={index} className="overflow-hidden group hover:shadow-lg transition-shadow border-none shadow-md">
+        <Card
+          key={index}
+          className="overflow-hidden group hover:shadow-lg transition-shadow border-none shadow-md"
+        >
           <div className="relative h-48 w-full">
             <img
               src="/restaurant.jpg"
@@ -399,7 +457,7 @@ const EnhancedTripViewer = ({ data }) => {
               {restaurant.priceRange}
             </div>
           </div>
-          
+
           <CardHeader className="bg-white">
             <CardTitle className="flex items-center gap-2">
               <Utensils className="w-5 h-5 text-indigo-500" />
@@ -417,7 +475,7 @@ const EnhancedTripViewer = ({ data }) => {
               </a>
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="bg-white">
             <div className="space-y-4">
               <div>
@@ -425,7 +483,7 @@ const EnhancedTripViewer = ({ data }) => {
                   {restaurant.cuisine} Cuisine
                 </span>
               </div>
-              
+
               <div>
                 <p className="font-medium mb-2">Must Try Dishes:</p>
                 <div className="flex flex-wrap gap-2">
@@ -442,7 +500,7 @@ const EnhancedTripViewer = ({ data }) => {
                 className="w-full mt-2 font-semibold shadow-sm group-hover:bg-indigo-50 text-indigo-700 border-indigo-200"
                 onClick={() => {
                   const availabilityQuery = `${restaurant.name} in ${restaurant.location}`;
-                  window.open(createGoogleMapsUrl(availabilityQuery), '_blank');
+                  window.open(createGoogleMapsUrl(availabilityQuery), "_blank");
                 }}
               >
                 View on Map
@@ -472,7 +530,7 @@ const EnhancedTripViewer = ({ data }) => {
               </CardHeader>
             </div>
           </div>
-          
+
           <CardContent className="pt-6 bg-white">
             <div className="space-y-6">
               {day.activities.map((activity, index) => (
@@ -491,7 +549,7 @@ const EnhancedTripViewer = ({ data }) => {
                         className="h-full w-full object-cover"
                       />
                     </div>
-                    
+
                     <div className="flex-1">
                       <div className="flex justify-between">
                         <p className="font-medium text-gray-900 group-hover:text-indigo-700 transition-colors">
@@ -501,17 +559,17 @@ const EnhancedTripViewer = ({ data }) => {
                           {activity.duration}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
                         <Clock className="w-4 h-4" />
                         {activity.time}
                       </div>
-                      
+
                       <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
                         <MapPin className="w-4 h-4" />
                         {activity.location}
                       </div>
-                      
+
                       <div className="mt-2 text-sm">
                         <span className="text-gray-500">Cost: ${activity.cost}</span>
                         {activity.notes && (
@@ -527,6 +585,120 @@ const EnhancedTripViewer = ({ data }) => {
         </Card>
       ))}
     </div>
+  );
+
+  // New Section to Display User Preferences
+  const UserPreferencesSection = () => (
+    <Card className="mb-6 border-none shadow-md overflow-hidden">
+      <div className="bg-gradient-to-r from-teal-500 to-green-600 text-white">
+        <CardHeader>
+          <CardTitle>User Preferences</CardTitle>
+          <CardDescription>
+            Additional details provided by the user
+          </CardDescription>
+        </CardHeader>
+      </div>
+      <CardContent className="pt-6 bg-white">
+        <div className="space-y-4">
+          {formData.dateFlexibility && (
+            <div>
+              <p className="text-sm text-gray-500">Date Flexibility:</p>
+              <p className="font-medium">{formData.dateFlexibility}</p>
+            </div>
+          )}
+          {formData.preferredSeason && (
+            <div>
+              <p className="text-sm text-gray-500">Preferred Season:</p>
+              <p className="font-medium">{formData.preferredSeason}</p>
+            </div>
+          )}
+          {formData.budgetIncludes && (
+            <div>
+              <p className="text-sm text-gray-500">Budget Includes:</p>
+              <p className="font-medium">{formData.budgetIncludes}</p>
+            </div>
+          )}
+          {formData.splurgeCategories && formData.splurgeCategories.length > 0 && (
+            <div>
+              <p className="text-sm text-gray-500">Splurge Categories:</p>
+              <p className="font-medium">
+                {formData.splurgeCategories.join(", ")}
+              </p>
+            </div>
+          )}
+          {formData.accommodationType && (
+            <div>
+              <p className="text-sm text-gray-500">Accommodation Type:</p>
+              <p className="font-medium">{formData.accommodationType}</p>
+            </div>
+          )}
+          {formData.locationPreference && (
+            <div>
+              <p className="text-sm text-gray-500">Location Preference:</p>
+              <p className="font-medium">{formData.locationPreference}</p>
+            </div>
+          )}
+          {formData.transportationTypes && formData.transportationTypes.length > 0 && (
+            <div>
+              <p className="text-sm text-gray-500">Transportation Types:</p>
+              <p className="font-medium">
+                {formData.transportationTypes.join(", ")}
+              </p>
+            </div>
+          )}
+          {formData.activityIntensity && (
+            <div>
+              <p className="text-sm text-gray-500">Activity Intensity:</p>
+              <p className="font-medium">{formData.activityIntensity}</p>
+            </div>
+          )}
+          {formData.mustSeeAttractions && (
+            <div>
+              <p className="text-sm text-gray-500">Must-See Attractions:</p>
+              <p className="font-medium">{formData.mustSeeAttractions}</p>
+            </div>
+          )}
+          {formData.cuisineTypes && formData.cuisineTypes.length > 0 && (
+            <div>
+              <p className="text-sm text-gray-500">Cuisine Types:</p>
+              <p className="font-medium">{formData.cuisineTypes.join(", ")}</p>
+            </div>
+          )}
+          {formData.diningStyles && formData.diningStyles.length > 0 && (
+            <div>
+              <p className="text-sm text-gray-500">Dining Styles:</p>
+              <p className="font-medium">{formData.diningStyles.join(", ")}</p>
+            </div>
+          )}
+          {formData.dietaryRestrictions && formData.dietaryRestrictions.length > 0 && (
+            <div>
+              <p className="text-sm text-gray-500">Dietary Restrictions:</p>
+              <p className="font-medium">
+                {formData.dietaryRestrictions.join(", ")}
+              </p>
+            </div>
+          )}
+          {formData.structuredVsFreeTime && (
+            <div>
+              <p className="text-sm text-gray-500">Structured vs Free Time:</p>
+              <p className="font-medium">{formData.structuredVsFreeTime}</p>
+            </div>
+          )}
+          {formData.morningVsEveningPerson && (
+            <div>
+              <p className="text-sm text-gray-500">Morning vs Evening Person:</p>
+              <p className="font-medium">{formData.morningVsEveningPerson}</p>
+            </div>
+          )}
+          {formData.specialRequirements && (
+            <div>
+              <p className="text-sm text-gray-500">Special Requirements:</p>
+              <p className="font-medium">{formData.specialRequirements}</p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 
   return (
@@ -548,7 +720,7 @@ const EnhancedTripViewer = ({ data }) => {
         </div>
         <div className="absolute top-4 right-4 bg-white/90 px-3 py-2 rounded-full text-sm font-semibold text-gray-800 flex items-center gap-1 shadow-md">
           <Camera className="w-4 h-4" />
-          <a 
+          <a
             href={createGoogleMapsUrl(`${tripData.tripOverview.destination} panorama view`)}
             target="_blank"
             rel="noopener noreferrer"
@@ -561,6 +733,9 @@ const EnhancedTripViewer = ({ data }) => {
 
       <TripOverview />
       <CostBreakdown />
+
+      {/* Display User Preferences Section */}
+      <UserPreferencesSection />
 
       <Tabs defaultValue="itinerary" className="mb-6">
         <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full bg-white shadow-md rounded-lg overflow-hidden border-none">
@@ -595,4 +770,4 @@ const EnhancedTripViewer = ({ data }) => {
   );
 };
 
-export default EnhancedTripViewer;
+export default TripDetailViewer;
