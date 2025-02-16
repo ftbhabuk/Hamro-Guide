@@ -46,3 +46,5 @@ export const ACTIVITIES = [
   "Historical",
   "Nightlife",
 ];
+
+
