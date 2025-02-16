@@ -867,6 +867,8 @@ const CreateTripPage = () => {
         console.log("User Info from Google:", userInfo);
         setUserData(userInfo);
         localStorage.setItem("user_data", JSON.stringify(userInfo));
+        // Redirect after login
+        router.push("/create-trip");
       } catch (error) {
         console.error("Failed to fetch user info from Google:", error);
       }
@@ -881,6 +883,8 @@ const CreateTripPage = () => {
     setUserData(null);
     localStorage.removeItem("user_data");
     console.log("User signed out");
+    // Redirect to home page or login page
+    router.push("/");
   };
 
   useEffect(() => {
@@ -962,9 +966,7 @@ const CreateTripPage = () => {
     // Combine all form data
     const formData = {
       destination,
-      duration,
-      budget,
-      travelCompanion,
+      duration, travelCompanion,
       selectedActivities,
       specialRequirements,
       // Travel timing data
@@ -1370,46 +1372,57 @@ const CreateTripPage = () => {
   return (
     <div className="min-h-screen bg-white">
       <main className="max-w-3xl mx-auto px-6 py-8">
-        {userData && (
-          <div className="mb-6 bg-gray-50 p-4 rounded-lg">
-            <div className="flex items-center">
-              <img
-                src={userData.picture}
-                alt="Google Profile"
-                className="rounded-full w-12 h-12 mr-4"
-              />
-              <div className="flex-1">
-                <h2 className="text-xl font-semibold">
-                  Welcome, {userData.name}!
-                </h2>
-                <p className="text-gray-600">{userData.email}</p>
+        {/* Conditionally render based on login state */}
+        {isLoggedIn ? (
+          <>
+            {userData && (
+              <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center">
+                  <img
+                    src={userData.picture}
+                    alt="Google Profile"
+                    className="rounded-full w-12 h-12 mr-4"
+                  />
+                  <div className="flex-1">
+                    <h2 className="text-xl font-semibold">
+                      Welcome, {userData.name}!
+                    </h2>
+                    <p className="text-gray-600">{userData.email}</p>
+                  </div>
+                  <Button onClick={logout} variant="outline" size="sm">
+                    Logout
+                  </Button>
+                </div>
               </div>
-              <Button onClick={logout} variant="outline" size="sm">
-                Logout
-              </Button>
+            )}
+
+            <div className="mb-8">
+              <div className="w-full bg-gray-200 h-2 mb-4 rounded-full">
+                <div
+                  className="bg-red-600 h-2 rounded-full transition-all duration-300 ease-in-out"
+                  style={{ width: `${(currentStep / 5) * 100}%` }}
+                ></div>
+              </div>
+              <div className="flex justify-between text-sm text-gray-600">
+                <span className={currentStep >= 1 ? "text-red-600 font-medium" : ""}>Basics</span>
+                <span className={currentStep >= 2 ? "text-red-600 font-medium" : ""}>Budget</span>
+                <span className={currentStep >= 3 ? "text-red-600 font-medium" : ""}>Activities</span>
+                <span className={currentStep >= 4 ? "text-red-600 font-medium" : ""}>Dining</span>
+                <span className={currentStep >= 5 ? "text-red-600 font-medium" : ""}>Review</span>
+              </div>
             </div>
+
+            <form className="space-y-8">
+              {renderStep()}
+            </form>
+          </>
+        ) : (
+          // Render login prompt if not logged in
+          <div className="text-center">
+            <p className="mb-4">Please log in to create a trip plan.</p>
+            <Button onClick={login}>Login with Google</Button>
           </div>
         )}
-
-        <div className="mb-8">
-          <div className="w-full bg-gray-200 h-2 mb-4 rounded-full">
-            <div
-              className="bg-red-600 h-2 rounded-full transition-all duration-300 ease-in-out"
-              style={{ width: `${(currentStep / 5) * 100}%` }}
-            ></div>
-          </div>
-          <div className="flex justify-between text-sm text-gray-600">
-            <span className={currentStep >= 1 ? "text-red-600 font-medium" : ""}>Basics</span>
-            <span className={currentStep >= 2 ? "text-red-600 font-medium" : ""}>Budget</span>
-            <span className={currentStep >= 3 ? "text-red-600 font-medium" : ""}>Activities</span>
-            <span className={currentStep >= 4 ? "text-red-600 font-medium" : ""}>Dining</span>
-            <span className={currentStep >= 5 ? "text-red-600 font-medium" : ""}>Review</span>
-          </div>
-        </div>
-
-        <form className="space-y-8">
-          {renderStep()}
-        </form>
       </main>
     </div>
   );
@@ -1417,3 +1430,4 @@ const CreateTripPage = () => {
 
 export default CreateTripPage;
 
+      
