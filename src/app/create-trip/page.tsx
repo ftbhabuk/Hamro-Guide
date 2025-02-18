@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -8,9 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useRouter } from "next/navigation";
 import {
-  BUDGET_OPTIONS,
-  COMPANION_OPTIONS,
-  ACTIVITIES,
   ACCOMMODATION_TYPES,
   ACTIVITY_CATEGORIES,
   CUISINE_TYPES,
@@ -19,10 +15,9 @@ import {
   SEASONS,
   CURRENCIES,
   ACTIVITY_INTENSITY,
-  Option,
-  BudgetOption,
-  CompanionOption,
   TRANSPORTATION_TYPES,
+  BUDGET_OPTIONS,
+  COMPANION_OPTIONS,
 } from "./constants";
 import axios from "axios";
 import {
@@ -46,6 +41,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { CalendarIcon, InfoIcon } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
+import Navbar from "@/components/Navbar"; // Import the Navbar
 
 // Helper Components with Tooltips
 interface TooltipWrapperProps {
@@ -86,10 +84,7 @@ const CompanionSelection = ({
           Who are you traveling with?
         </label>
       </TooltipWrapper>
-      <Select
-        value={travelCompanion}
-        onValueChange={setTravelCompanion}
-      >
+      <Select value={travelCompanion} onValueChange={setTravelCompanion}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select travel companion" />
         </SelectTrigger>
@@ -168,7 +163,7 @@ const TravelDatesSelection = ({
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
-                    <Calendar
+                    <DayPicker
                       mode="single"
                       selected={startDate}
                       onSelect={setStartDate}
@@ -195,11 +190,11 @@ const TravelDatesSelection = ({
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
-                    <Calendar
+                    <DayPicker
                       mode="single"
                       selected={endDate}
                       onSelect={setEndDate}
-                      disabled={(date) => date < (startDate || new Date())}
+                      disabled={(date) => date ? date < (startDate || new Date()) : false}
                       initialFocus
                     />
                   </PopoverContent>
@@ -213,10 +208,7 @@ const TravelDatesSelection = ({
           <TooltipWrapper content="Let us know how flexible your travel dates are. This helps us suggest optimal timing.">
             <Label>How flexible are your dates?</Label>
           </TooltipWrapper>
-          <Select
-            value={dateFlexibility}
-            onValueChange={setDateFlexibility}
-          >
+          <Select value={dateFlexibility} onValueChange={setDateFlexibility}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select flexibility" />
             </SelectTrigger>
@@ -235,10 +227,7 @@ const TravelDatesSelection = ({
             <TooltipWrapper content="If you don't have specific dates, let us know your preferred season to travel.">
               <Label>Preferred Season to Travel</Label>
             </TooltipWrapper>
-            <Select
-              value={preferredSeason}
-              onValueChange={setPreferredSeason}
-            >
+            <Select value={preferredSeason} onValueChange={setPreferredSeason}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select preferred season" />
               </SelectTrigger>
@@ -393,7 +382,6 @@ const BudgetSelection = ({
   );
 };
 
-
 interface AccommodationPreferencesProps {
   accommodationType: string;
   setAccommodationType: (type: string) => void;
@@ -449,8 +437,8 @@ const AccommodationPreferences = ({
           className="h-20"
         />
         <p className="text-sm text-gray-500 italic">
-          Example: "I prefer to stay in the historic district" or "I'd like to
-          be within walking distance to major attractions"
+          Example: &quot;I prefer to stay in the historic district&quot; or &quot;I&apos;d like to
+          be within walking distance to major attractions&quot;
         </p>
       </div>
     </div>
@@ -597,8 +585,8 @@ const ActivityPreferencesDepth = ({
         className="h-20"
       />
       <p className="text-sm text-gray-500 italic">
-        Example: "I definitely want to visit the Louvre" or "Hiking in the
-        national park is a must for us"
+        Example: &quot;I definitely want to visit the Louvre&quot; or &quot;Hiking in the
+        national park is a must for us&quot;
       </p>
     </div>
   </div>
@@ -829,7 +817,7 @@ const CreateTripPage = () => {
   const [preferredSeason, setPreferredSeason] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [budgetIncludes, setBudgetIncludes] = useState("");
-  const [splurgeCategories , setSplurgeCategories] = useState<string[]>([]);
+  const [splurgeCategories, setSplurgeCategories] = useState<string[]>([]);
   const [accommodationType, setAccommodationType] = useState("");
   const [locationPreference, setLocationPreference] = useState("");
   const [transportationTypes, setTransportationTypes] = useState<string[]>([]);
@@ -966,7 +954,8 @@ const CreateTripPage = () => {
     // Combine all form data
     const formData = {
       destination,
-      duration, travelCompanion,
+      duration,
+      travelCompanion,
       selectedActivities,
       specialRequirements,
       // Travel timing data
@@ -1016,10 +1005,7 @@ const CreateTripPage = () => {
 
       if (response.data.success) {
         const tripPlanData = response.data.data;
-        console.log(
-          "Trip plan generated successfully:",
-          tripPlanData
-        );
+        console.log("Trip plan generated successfully:", tripPlanData);
         setTripPlan(tripPlanData);
 
         try {
@@ -1028,14 +1014,8 @@ const CreateTripPage = () => {
             tripPlan: tripPlanData,
           });
           const tripId = jsonBinResponse.metadata.id; // Get the ID
-          console.log(
-            "Trip plan stored in JSONBin.io with ID:",
-            tripId
-          );
-          localStorage.setItem(
-            "lastTripPlanBinId",
-            tripId
-          );
+          console.log("Trip plan stored in JSONBin.io with ID:", tripId);
+          localStorage.setItem("lastTripPlanBinId", tripId);
 
           // Store userData in localStorage
           localStorage.setItem("temp_user_data", JSON.stringify(userData));
@@ -1051,10 +1031,7 @@ const CreateTripPage = () => {
 
         setOpen(true);
       } else {
-        console.error(
-          "Failed to generate trip plan:",
-          response.data.error
-        );
+        console.error("Failed to generate trip plan:", response.data.error);
       }
     } catch (error) {
       console.error("Error during API call:", error);
@@ -1086,7 +1063,8 @@ const CreateTripPage = () => {
                   <h1>Tell us your travel preferences</h1>
                 </div>
                 <p className="text-gray-600 text-lg">
-                  Let's start with the basics. You can provide more details in the next steps.
+                  Let's start with the basics. You can provide more details in
+                  the next steps.
                 </p>
               </div>
 
@@ -1103,7 +1081,10 @@ const CreateTripPage = () => {
                   value={destination}
                   onChange={(e) => setDestination(e.target.value)}
                 />
-                <p className="text-sm text-gray-500 italic">Example: "Paris, France" or "Bali, Indonesia"</p>
+                <p className="text-sm text-gray-500 italic">
+                  Example: &quot;Paris, France&quot; or &quot;Bali,
+                  Indonesia&quot;
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -1159,7 +1140,8 @@ const CreateTripPage = () => {
                   <h1>Budget & Accommodation</h1>
                 </div>
                 <p className="text-gray-600 text-lg">
-                  Tell us about your spending preferences and where you'd like to stay.
+                  Tell us about your spending preferences and where you'd like
+                  to stay.
                 </p>
               </div>
 
@@ -1210,7 +1192,8 @@ const CreateTripPage = () => {
                   <h1>Transportation & Activities</h1>
                 </div>
                 <p className="text-gray-600 text-lg">
-                  Let us know how you want to get around and what you'd like to do.
+                  Let us know how you want to get around and what you'd like to
+                  do.
                 </p>
               </div>
 
@@ -1256,7 +1239,8 @@ const CreateTripPage = () => {
                   <h1>Dining & Time Preferences</h1>
                 </div>
                 <p className="text-gray-600 text-lg">
-                  Tell us about your food preferences and how you like to structure your time.
+                  Tell us about your food preferences and how you like to
+                  structure your time.
                 </p>
               </div>
 
@@ -1321,24 +1305,40 @@ const CreateTripPage = () => {
                   onChange={(e) => setSpecialRequirements(e.target.value)}
                 />
                 <p className="text-sm text-gray-500 italic">
-                  Examples: &quot;I need wheelchair-accessible accommodations&quot;, &quot;I prefer female tour guides&quot;,
-                  &quot;I want to attend a local festival&quot;, I&apos;m traveling with a pet, etc.
+                  Examples: &quot;I need wheelchair-accessible
+                  accommodations&quot;, &quot;I prefer female tour
+                  guides&quot;, &quot;I want to attend a local
+                  festival&quot;, I&apos;m traveling with a pet, etc.
                 </p>
-
               </div>
 
               <div className="bg-blue-50 p-4 rounded-md">
-                <h3 className="font-medium text-blue-800 mb-2">Review Your Trip Details</h3>
+                <h3 className="font-medium text-blue-800 mb-2">
+                  Review Your Trip Details
+                </h3>
                 <ul className="space-y-1 text-sm text-blue-700">
-                  <li><strong>Destination:</strong> {destination}</li>
-                  <li><strong>Duration:</strong> {duration} days</li>
-                  <li><strong>Budget Level:</strong> {budget}</li>
-                  <li><strong>Travel Companion:</strong> {travelCompanion}</li>
+                  <li>
+                    <strong>Destination:</strong> {destination}
+                  </li>
+                  <li>
+                    <strong>Duration:</strong> {duration} days
+                  </li>
+                  <li>
+                    <strong>Budget Level:</strong> {budget}
+                  </li>
+                  <li>
+                    <strong>Travel Companion:</strong> {travelCompanion}
+                  </li>
                   {startDate && endDate && (
-                    <li><strong>Dates:</strong> {format(startDate, 'MMM d, yyyy')} to {format(endDate, 'MMM d, yyyy')}</li>
+                    <li>
+                      <strong>Dates:</strong> {format(startDate, "MMM d, yyyy")}{" "}
+                      to {format(endDate, "MMM d, yyyy")}
+                    </li>
                   )}
                   {selectedActivities.length > 0 && (
-                    <li><strong>Activities:</strong> {selectedActivities.join(', ')}</li>
+                    <li>
+                      <strong>Activities:</strong> {selectedActivities.join(", ")}
+                    </li>
                   )}
                   {/* Add more key details as needed */}
                 </ul>
@@ -1371,31 +1371,15 @@ const CreateTripPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <Navbar
+        isLoggedIn={isLoggedIn}
+        onLogout={logout}
+        onSignIn={() => login()} // Pass the login function
+      />
       <main className="max-w-3xl mx-auto px-6 py-8">
         {/* Conditionally render based on login state */}
         {isLoggedIn ? (
           <>
-            {userData && (
-              <div className="mb-6 bg-gray-50 p-4 rounded-lg">
-                <div className="flex items-center">
-                  <img
-                    src={userData.picture}
-                    alt="Google Profile"
-                    className="rounded-full w-12 h-12 mr-4"
-                  />
-                  <div className="flex-1">
-                    <h2 className="text-xl font-semibold">
-                      Welcome, {userData.name}!
-                    </h2>
-                    <p className="text-gray-600">{userData.email}</p>
-                  </div>
-                  <Button onClick={logout} variant="outline" size="sm">
-                    Logout
-                  </Button>
-                </div>
-              </div>
-            )}
-
             <div className="mb-8">
               <div className="w-full bg-gray-200 h-2 mb-4 rounded-full">
                 <div
@@ -1404,24 +1388,39 @@ const CreateTripPage = () => {
                 ></div>
               </div>
               <div className="flex justify-between text-sm text-gray-600">
-                <span className={currentStep >= 1 ? "text-red-600 font-medium" : ""}>Basics</span>
-                <span className={currentStep >= 2 ? "text-red-600 font-medium" : ""}>Budget</span>
-                <span className={currentStep >= 3 ? "text-red-600 font-medium" : ""}>Activities</span>
-                <span className={currentStep >= 4 ? "text-red-600 font-medium" : ""}>Dining</span>
-                <span className={currentStep >= 5 ? "text-red-600 font-medium" : ""}>Review</span>
+                <span
+                  className={currentStep >= 1 ? "text-red-600 font-medium" : ""}
+                >
+                  Basics
+                </span>
+                <span
+                  className={currentStep >= 2 ? "text-red-600 font-medium" : ""}
+                >
+                  Budget
+                </span>
+                <span
+                  className={currentStep >= 3 ? "text-red-600 font-medium" : ""}
+                >
+                  Activities
+                </span>
+                <span
+                  className={currentStep >= 4 ? "text-red-600 font-medium" : ""}
+                >
+                  Dining
+                </span>
+                <span
+                  className={currentStep >= 5 ? "text-red-600 font-medium" : ""}
+                >
+                  Review
+                </span>
               </div>
             </div>
 
-            <form className="space-y-8">
-              {renderStep()}
-            </form>
+            <form className="space-y-8">{renderStep()}</form>
           </>
         ) : (
           // Render login prompt if not logged in
-          <div className="text-center">
-            <p className="mb-4">Please log in to create a trip plan.</p>
-            <Button onClick={login}>Login with Google</Button>
-          </div>
+          <div>Please Login</div>
         )}
       </main>
     </div>
@@ -1430,4 +1429,3 @@ const CreateTripPage = () => {
 
 export default CreateTripPage;
 
-      

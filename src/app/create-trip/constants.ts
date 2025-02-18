@@ -3,10 +3,10 @@ import { Users, Heart } from "lucide-react";
 import React from "react";
 
 // Define types
-interface Option {
-  label: string;
-  value: string;
-}
+// interface Option {
+//   label: string;
+//   value: string;
+// }
 
 interface BudgetOption {
   level: string;

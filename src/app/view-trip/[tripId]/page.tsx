@@ -15,7 +15,7 @@ import TripDetailsViewer from "@/components/TripDetailsViewer"; // Make sure thi
 const ViewTripPage = () => {
   const params = useParams();
   const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<Error | null>(null);
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
 
