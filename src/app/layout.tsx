@@ -1,12 +1,10 @@
-// src/app/layout.tsx
-import type { Metadata } from "next";
+const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_AUTH_CLIENT_ID;
+
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
 import { Toaster } from "sonner";
 import Navbar from "@/components/Navbar";
-
-// Move SessionProvider to a separate client component
-import AuthProvider from "@/components/AuthProvider";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,12 +16,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "ExploreMore - Your Travel Guide",
-  description:
-    "Discover top destinations, hidden gems, and travel tips to make your journey unforgettable.",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,11 +24,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AuthProvider>
-          <Navbar />
-          <Toaster position="top-right" />
-          {children}
-        </AuthProvider>
+        {googleClientId ? (
+          <GoogleOAuthProvider clientId={googleClientId}>
+            <Navbar /> {/* Render the Navbar component */}
+            <Toaster position="top-right" />
+            {children}
+          </GoogleOAuthProvider>
+        ) : (
+          <>
+            <Navbar /> {/* Render the Navbar component */}
+            <Toaster position="top-right" />
+            {children}
+          </>
+        )}
       </body>
     </html>
   );
