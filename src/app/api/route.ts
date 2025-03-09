@@ -1,5 +1,6 @@
+// src/app/api/route.ts
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { nepalDatabase } from "@/lib/nepal-data";
+import { loadDestinationsFromDrive, NepalDestination } from "@/lib/csv-loader";
 
 const generationConfig = {
   temperature: 0.7,
@@ -9,54 +10,26 @@ const generationConfig = {
   responseMimeType: "application/json",
 };
 
-// Helper function to find matching destination in database
-function findNepalDestination(input: string) {
+function findNepalDestination(input: string, destinations: NepalDestination[]) {
   if (!input) return null;
 
   const normalizedInput = input.toLowerCase();
 
-  // Check main destinations
-  for (const dest of nepalDatabase.destinations) {
-    // Check main name
-    if (normalizedInput.includes(dest.name.toLowerCase())) {
-      return { name: dest.name, type: "main destination" };
+  for (const dest of destinations) {
+    if (normalizedInput.includes(dest.pName.toLowerCase())) {
+      return { name: dest.pName, type: "main destination", data: dest };
     }
-
-    // Check Nepali name if it exists
-    if (
-      dest.nepaliName &&
-      normalizedInput.includes(dest.nepaliName.toLowerCase())
-    ) {
-      return { name: dest.name, type: "main destination" };
+    if (normalizedInput.includes(dest.district.toLowerCase())) {
+      return { name: dest.pName, district: dest.district, type: "district", data: dest };
     }
-
-    // Check local terms if they exist
-    if (dest.localTerms) {
-      for (const term of dest.localTerms) {
-        if (normalizedInput.includes(term.toLowerCase())) {
-          return { name: dest.name, type: "main destination" };
-        }
+    for (const tag of dest.tags) {
+      if (normalizedInput.includes(tag.toLowerCase())) {
+        return { name: dest.pName, tag, type: "tagged place", data: dest };
       }
     }
-
-    // Check sub-regions if they exist
-    if (dest.subRegions) {
-      for (const subRegion of dest.subRegions) {
-        if (normalizedInput.includes(subRegion.name.toLowerCase())) {
-          return {
-            name: `${subRegion.name}, ${dest.name}`,
-            type: "sub-region",
-          };
-        }
-      }
-    }
-
-    // Check must-visit places
-    if (dest.mustVisit) {
-      for (const place of dest.mustVisit) {
-        if (normalizedInput.includes(place.toLowerCase())) {
-          return { name: `${place}, ${dest.name}`, type: "attraction" };
-        }
+    for (const activity of dest.things_to_do) {
+      if (normalizedInput.includes(activity.toLowerCase())) {
+        return { name: dest.pName, activity, type: "activity", data: dest };
       }
     }
   }
@@ -79,65 +52,50 @@ export async function POST(req: Request) {
       preferredSeason,
       currency,
       budgetIncludes,
-      splurgeCategories,
+      splurgeCategories = [],
       accommodationType,
       locationPreference,
-      transportationTypes,
+      transportationTypes = [],
       activityIntensity,
       mustSeeAttractions,
-      cuisineTypes,
-      diningStyles,
-      dietaryRestrictions,
+      cuisineTypes = [],
+      diningStyles = [],
+      dietaryRestrictions = [],
       structuredVsFreeTime,
       morningVsEveningPerson,
       user: userData,
     } = await req.json();
 
-    // Log the user data for debugging
     console.log("User Data received in /api:", userData);
 
-    // Safely get user destination
     let userDestination = "";
-    if (
-      destination &&
-      typeof destination === "object" &&
-      "label" in destination
-    ) {
+    if (destination && typeof destination === "object" && "label" in destination) {
       userDestination = destination.label as string;
     } else if (typeof destination === "string") {
       userDestination = destination;
     } else {
-      // Handle case where destination is missing or invalid
       throw new Error("Invalid or missing destination");
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const chatSession = model.startChat({ generationConfig });
 
-    // Try to match it with our Nepal database
-    const matchedDestination = findNepalDestination(userDestination);
+    const destinations = await loadDestinationsFromDrive(); // Fetch from Drive
+    const matchedDestination = findNepalDestination(userDestination, destinations);
 
-    // Safely check if this is about Nepal
     const isNepalDestination =
-      matchedDestination !== null ||
-      userDestination.toLowerCase().includes("nepal");
+      matchedDestination !== null || userDestination.toLowerCase().includes("nepal");
 
-    // Get activities as a string, handling the case where it might be missing
     const activitiesString = Array.isArray(selectedActivities)
       ? selectedActivities.join(", ")
       : "";
 
-    // Base prompt with STRONG emphasis on using the exact destination
     let userPrompt = `
-      Act as a professional travel planner (like a local guide in Nepal).
+      Act as a professional travel planner specializing in Nepal.
 
       CRITICAL INSTRUCTION: You MUST create a trip plan for EXACTLY this
-      destination: "${userDestination}".
-
-      - Do NOT substitute it with a more popular destination.
-      - Do NOT change the destination to a nearby city.
-      - The trip MUST be to ${userDestination} EXACTLY as specified.
+      destination: "${userDestination}". Do NOT substitute it or change it.
 
       Trip Details:
       - Destination: ${userDestination}
@@ -165,92 +123,68 @@ export async function POST(req: Request) {
       - Morning vs Evening Person: ${morningVsEveningPerson}
     `;
 
-    if (matchedDestination) {
+    if (matchedDestination && matchedDestination.data) {
+      const destData = matchedDestination.data;
       userPrompt += `
-
-        I've identified that "${userDestination}" is in or near
-        ${matchedDestination.name}. You MUST focus the trip on
-        "${userDestination}" specifically, while you can use information about
-        ${matchedDestination.name} to help with recommendations.
+        MATCHED DESTINATION DETAILS:
+        - Name: ${destData.pName}
+        - District: ${destData.district}
+        - Province: ${destData.province}
+        - Ratings (0-5): Culture: ${destData.culture}, Adventure: ${destData.adventure}, Wildlife: ${destData.wildlife}, Sightseeing: ${destData.sightseeing}, History: ${destData.history}
+        - Tags: ${destData.tags.join(", ")}
+        - Nearby Landmark: ${destData.nearby_landmark}
+        - Best Time to Visit: ${destData.best_time_to_visit}
+        - Things to Do: ${(destData.things_to_do || []).join(", ") || "Not specified"}
+        - Travel Tips: ${(destData.travel_tips || []).join(", ") || "Not specified"}
+        - Local Specialty: Not specified
+    
+        Use this data to craft a rich trip plan:
+        - Prioritize "Things to Do" matching user activities.
+        - Use numeric ratings to align with preferences.
+        - Include the Nearby Landmark if it fits.
+        - Weave Travel Tips into essentialInfo.
+        - Add Local Specialty to restaurants.mustTryDishes or itinerary notes if provided.
       `;
     }
 
-    // Add Nepal-specific information if the destination is in Nepal
     if (isNepalDestination) {
+      const nearbyPlaces = matchedDestination
+        ? destinations
+            .filter(
+              (d) =>
+                (d.province === matchedDestination.data.province ||
+                  d.district === matchedDestination.data.district) &&
+                d.pName !== matchedDestination.data.pName
+            )
+            .slice(0, 2)
+        : [];
+
       userPrompt += `
-        Since this trip is to Nepal, use the following verified information:
-        --- NEPAL VERIFIED DATA ---
-        DESTINATIONS:
-        ${JSON.stringify(nepalDatabase.destinations, null, 2)}
-        RECOMMENDED HOTELS:
-        ${JSON.stringify(nepalDatabase.hotels, null, 2)}
-        LOCAL CUISINE:
-        ${JSON.stringify(nepalDatabase.cuisine, null, 2)}
-        TRANSPORTATION OPTIONS:
-        ${JSON.stringify(nepalDatabase.transportation, null, 2)}
-        CULTURAL NOTES:
-        ${JSON.stringify(nepalDatabase.culturalNotes, null, 2)}
-        SAFETY TIPS:
-        ${JSON.stringify(nepalDatabase.safetyTips, null, 2)}
-        EMERGENCY INFORMATION:
-        ${JSON.stringify(nepalDatabase.emergencyInfo, null, 2)}
-        --- END NEPAL VERIFIED DATA ---
-
-        Important Nepal-specific guidelines:
-
-        1. Incorporate the verified destinations, hotels, and cuisine in your
-           plan.
-        2. Consider seasonal factors for the itinerary.
-        3. Include appropriate cultural notes and safety tips.
-        4. Use the emergency information provided.
-        5. Factor in transportation options and costs.
-
-        If the user specified a small town, village, or local area in Nepal
-        that's not in our database, please:
-
-        1. Include it in the itinerary and make it the central focus.
-        2. You can reference the nearest major destination in our database for
-           context.
-        3. Suggest authentic local experiences for that specific area.
-        4. Include local transportation options to get there.
-        5. Recommend local homestays or guesthouses if available.
-        6. **If information about "${userDestination}" is limited in the
-           provided data:
-           - Prioritize suggesting general activities or attractions in the
-             *region* rather than inventing specific details.
-           - When recommending hotels or restaurants, if specific options for
-             "${userDestination}" are unavailable in the provided data, suggest
-             options in the nearest major town or city (e.g., Kathmandu,
-             Pokhara).
-           - If the database lacks specific details for "${userDestination}",
-             focus on providing essential travel information like transportation
-             options, safety tips, and cultural notes.
-           - Do NOT invent specific details or attractions that are not
-             verifiable.**
+        NEPAL DATA:
+        - Nearby Places (if matched): ${nearbyPlaces.length ? JSON.stringify(nearbyPlaces, null, 2) : "None identified"}
+        - Emergency Info: Police: 100, Ambulance: 102, Tourist Police (Kathmandu): +977 1 4226359
+        - Cultural Notes: Remove shoes at temples, Dress modestly, Use right hand
+        - Safety Tips: Drink bottled water, Carry flashlight, Watch altitude
+        
+        Guidelines for Local Places:
+        1. Use the matched destination's data for activities, timing, and tips.
+        2. Suggest visiting Nearby Places or the Nearby Landmark if relevant.
+        3. If "${userDestination}" isn’t in the data, use the nearest matching district or province info and focus on general Nepal experiences.
       `;
     } else {
       userPrompt += `
-        **If "${userDestination}" is not found in the provided database:
-
-        - Use your knowledge to provide a general overview of the area, but
-          clearly state that the information is based on your general knowledge
-          and may not be entirely accurate.
-        - Prioritize suggesting transportation options to reach the area from the
-          nearest major city in Nepal (e.g., Kathmandu, Pokhara).
-        - Recommend local homestays or guesthouses if available.
-        - Do NOT invent specific details or attractions that are not
-          verifiable.**
+        If "${userDestination}" isn’t in the data:
+        - Provide a general overview based on your knowledge.
+        - Suggest transport from Kathmandu or Pokhara.
+        - Avoid inventing unverifiable details.
       `;
     }
 
-    // Add the response format requirements with hardcoded destination
     userPrompt += `
-      Provide a comprehensive travel plan in a valid JSON format strictly
-      following this structure:
+      Provide a travel plan in valid JSON format:
       {
         "tripOverview": {
-          "destination": "${userDestination}", // MUST be exactly this value, do
-                                               // not change it
+          "destination": "${userDestination}",
           "duration": number,
           "bestTimeToVisit": string,
           "weatherInfo": string,
@@ -260,8 +194,7 @@ export async function POST(req: Request) {
         "hotels": [
           {
             "name": string,
-            "location": string, // This should include ${userDestination} for at
-                                 // least one hotel
+            "location": string,
             "pricePerNight": number,
             "rating": number,
             "amenities": string[],
@@ -277,8 +210,7 @@ export async function POST(req: Request) {
               {
                 "time": string,
                 "activity": string,
-                "location": string, // Most activities should be in
-                                     // ${userDestination}
+                "location": string,
                 "duration": string,
                 "cost": number,
                 "notes": string
@@ -290,8 +222,7 @@ export async function POST(req: Request) {
           {
             "name": string,
             "cuisine": string,
-            "location": string, // At least one restaurant should be in
-                                 // ${userDestination}
+            "location": string,
             "priceRange": string,
             "mustTryDishes": string[],
             "rating": number
@@ -327,84 +258,52 @@ export async function POST(req: Request) {
         }
       }
 
-      Important guidelines:
-
-      1. All prices should be in USD.
-      2. Use realistic prices and ratings.
-      3. Include at least 2 hotel options.
-      4. Provide a detailed day-by-day itinerary.
-      5. Factor in travel time between locations.
-      6. Consider the selected activities and special requirements.
-      7. Include local emergency contacts.
-      8. Ensure all arrays contain at least one item.
-      9. All fields must be present and properly formatted.
-      10. Ensure the JSON is valid and follows the exact structure provided.
-      11. The destination MUST be "${userDestination}" exactly as provided by
-          the user.
-
-      Your response should be ONLY the JSON object, with no additional text or
-      explanations.
+      Guidelines:
+      1. Prices in USD.
+      2. At least 2 hotels, realistic prices/ratings.
+      3. Detailed daily itinerary using Things to Do and Nearby Places.
+      4. Use numeric ratings to match user preferences.
+      5. Include the Nearby Landmark if relevant.
+      6. Incorporate Travel Tips in essentialInfo.
+      7. Return ONLY the JSON object, no extra text.
     `;
 
     const result = await chatSession.sendMessage(userPrompt);
     const responseText = result.response.text();
 
-    // Log the raw response for debugging
     console.log("Raw Gemini Response:", responseText);
 
-    // Safety net for JSON parsing
     let fixedResponseText = responseText;
     try {
-      // Try to fix common JSON errors
-      fixedResponseText = responseText.replace(/,\s*}/g, "}"); // Remove trailing commas
-      fixedResponseText = responseText.replace(/,\s*]/g, "]"); // Remove trailing commas
+      fixedResponseText = responseText.replace(/,\s*}/g, "}").replace(/,\s*]/g, "]");
     } catch (fixError) {
       console.warn("Error trying to fix JSON:", fixError);
     }
 
-    // Validate JSON structure and force correct destination if needed
     try {
       const tripPlan = JSON.parse(fixedResponseText);
-
-      // Force the correct destination if Gemini ignored our instructions
-      if (
-        tripPlan.tripOverview &&
-        tripPlan.tripOverview.destination !== userDestination
-      ) {
+      if (tripPlan.tripOverview && tripPlan.tripOverview.destination !== userDestination) {
         console.log(
           `Correcting destination from "${tripPlan.tripOverview.destination}" to "${userDestination}"`
         );
         tripPlan.tripOverview.destination = userDestination;
       }
-
-      // Basic validation of required fields
-      if (
-        !tripPlan.tripOverview ||
-        !tripPlan.hotels ||
-        !tripPlan.dailyItinerary
-      ) {
+      if (!tripPlan.tripOverview || !tripPlan.hotels || !tripPlan.dailyItinerary) {
         throw new Error("Invalid response structure");
       }
-
       return Response.json({ success: true, data: tripPlan });
     } catch (parseError) {
       console.error("Error parsing JSON:", parseError);
-      console.error("Response Text:", responseText); // Log the response text
+      console.error("Response Text:", responseText);
       return Response.json(
-        {
-          success: false,
-          error: "Failed to parse JSON response from the model.",
-        },
+        { success: false, error: "Failed to parse JSON response from the model." },
         { status: 500 }
       );
     }
   } catch (error) {
     console.error("Error generating trip plan:", error);
     return Response.json(
-      {
-        success: false,
-        error: "Failed to generate trip plan. Please try again.",
-      },
+      { success: false, error: "Failed to generate trip plan. Please try again." },
       { status: 500 }
     );
   }
