@@ -75,3 +75,10 @@
 | Distance | - | Distance from origin |
 | Place ID | - | Place ID |
 
+
+
+best idea implemetation given by grok 
+implement it .. it is literally the best
+plzz plzz see if after u got ggole maps api..
+
+"https://grok.com/share/bGVnYWN5_9ee0f5d3-c273-476e-86ae-9db38480e6bc"
