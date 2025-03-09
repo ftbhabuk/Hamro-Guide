@@ -1,6 +1,6 @@
 // src/app/api/route.ts
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { loadDestinationsFromCSV, NepalDestination } from "@/lib/csv-loader";
+import { loadDestinationsFromDrive, NepalDestination } from "@/lib/csv-loader";
 
 const generationConfig = {
   temperature: 0.7,
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const chatSession = model.startChat({ generationConfig });
 
-    const destinations = loadDestinationsFromCSV();
+    const destinations = await loadDestinationsFromDrive(); // Fetch from Drive
     const matchedDestination = findNepalDestination(userDestination, destinations);
 
     const isNepalDestination =
@@ -136,13 +136,18 @@ export async function POST(req: Request) {
         - Best Time to Visit: ${destData.best_time_to_visit}
         - Things to Do: ${destData.things_to_do.join(", ")}
         - Travel Tips: ${destData.travel_tips.join(", ")}
-        
-        Use this data as the primary basis for the trip plan. Prioritize activities from "Things to Do" that match the user's "Activities of Interest". Use the numeric ratings to tailor the itinerary (e.g., high Adventure for thrill-seekers). Include the Nearby Landmark in the plan if relevant.
-      `;
-    }
+        - Local Specialty: Not specified
+
+       Use this data to craft a rich trip plan:
+    - Prioritize "Things to Do" matching user activities.
+    - Use numeric ratings to align with preferences.
+    - Include the Nearby Landmark if it fits.
+    - Weave Travel Tips into essentialInfo.
+    - Add Local Specialty to restaurants.mustTryDishes or itinerary notes if provided.
+  `;
+}
 
     if (isNepalDestination) {
-      // Suggest nearby places based on province or district
       const nearbyPlaces = matchedDestination
         ? destinations
             .filter(
@@ -151,20 +156,19 @@ export async function POST(req: Request) {
                   d.district === matchedDestination.data.district) &&
                 d.pName !== matchedDestination.data.pName
             )
-            .slice(0, 2) // Top 2 nearby places
+            .slice(0, 2)
         : [];
 
       userPrompt += `
         NEPAL DATA:
-        - All Destinations: ${JSON.stringify(destinations, null, 2)}
         - Nearby Places (if matched): ${nearbyPlaces.length ? JSON.stringify(nearbyPlaces, null, 2) : "None identified"}
         - Emergency Info: Police: 100, Ambulance: 102, Tourist Police (Kathmandu): +977 1 4226359
         - Cultural Notes: Remove shoes at temples, Dress modestly, Use right hand
         - Safety Tips: Drink bottled water, Carry flashlight, Watch altitude
         
         Guidelines for Local Places:
-        1. Use the matched destination's data (if available) for activities, timing, and tips.
-        2. Suggest visiting Nearby Places or the Nearby Landmark if they fit the duration and interests.
+        1. Use the matched destination's data for activities, timing, and tips.
+        2. Suggest visiting Nearby Places or the Nearby Landmark if relevant.
         3. If "${userDestination}" isn’t in the data, use the nearest matching district or province info and focus on general Nepal experiences.
       `;
     } else {
@@ -258,7 +262,7 @@ export async function POST(req: Request) {
       1. Prices in USD.
       2. At least 2 hotels, realistic prices/ratings.
       3. Detailed daily itinerary using Things to Do and Nearby Places.
-      4. Use numeric ratings to match user preferences (e.g., high Sightseeing for scenic lovers).
+      4. Use numeric ratings to match user preferences.
       5. Include the Nearby Landmark if relevant.
       6. Incorporate Travel Tips in essentialInfo.
       7. Return ONLY the JSON object, no extra text.
