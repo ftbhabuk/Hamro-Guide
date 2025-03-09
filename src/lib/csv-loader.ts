@@ -16,7 +16,7 @@ export interface NepalDestination {
   nearby_landmark: string;
   best_time_to_visit: string;
   things_to_do: string[];
-  travel_tips: string[]; // Swapped travel_tips for local_specialties
+  travel_tips: string[]; // Ensure this matches the CSV column name
 }
 
 const GOOGLE_DRIVE_FILE_ID = "1F62pqLXHZOFNOwKbzOdyEKAPhaP_Tz0i";
@@ -33,22 +33,32 @@ export async function loadDestinationsFromDrive(): Promise<NepalDestination[]> {
       trim: true,
     });
 
-    return records.map((record: Record<string, string>) => ({
-      pID: parseInt(record.pID),
-      pName: record.pName,
-      culture: parseInt(record.culture),
-      adventure: parseInt(record.adventure),
-      wildlife: parseInt(record.wildlife),
-      sightseeing: parseInt(record.sightseeing),
-      history: parseInt(record.history),
-      tags: record.tags?.replace(/"/g, "").split(",").map((tag: string) => tag.trim()) || [],
-      province: parseInt(record.province),
-      district: record.district,
-      nearby_landmark: record.nearby_landmark,
-      best_time_to_visit: record.best_time_to_visit,
-      things_to_do: record.things_to_do?.split(",").map((item: string) => item.trim()) || [],
-      local_specialties: record.local_specialties || "", // Updated to match your new column
-    }));
+    return records.map((record: Record<string, string>) => {
+      // Handle travel_tips with triple quotes and semicolon
+      const travelTipsRaw = record.travel_tips || "";
+      const travelTips = travelTipsRaw
+        .replace(/"/g, "") // Remove all quotes
+        .split(";") // Split by semicolon
+        .map((item: string) => item.trim())
+        .filter((item: string) => item.length > 0); // Remove empty items
+
+      return {
+        pID: parseInt(record.pID),
+        pName: record.pName,
+        culture: parseInt(record.culture),
+        adventure: parseInt(record.adventure),
+        wildlife: parseInt(record.wildlife),
+        sightseeing: parseInt(record.sightseeing),
+        history: parseInt(record.history),
+        tags: record.tags?.replace(/"/g, "").split(",").map((tag: string) => tag.trim()) || [],
+        province: parseInt(record.province),
+        district: record.district,
+        nearby_landmark: record.nearby_landmark,
+        best_time_to_visit: record.best_time_to_visit,
+        things_to_do: record.things_to_do?.split(",").map((item: string) => item.trim()) || [],
+        travel_tips: travelTips.length > 0 ? travelTips : [], // Default to empty array if no valid tips
+      };
+    });
   } catch (error) {
     console.error("Error fetching CSV from Google Drive:", error);
     return [];

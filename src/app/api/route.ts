@@ -134,18 +134,18 @@ export async function POST(req: Request) {
         - Tags: ${destData.tags.join(", ")}
         - Nearby Landmark: ${destData.nearby_landmark}
         - Best Time to Visit: ${destData.best_time_to_visit}
-        - Things to Do: ${destData.things_to_do.join(", ")}
-        - Travel Tips: ${destData.travel_tips.join(", ")}
+        - Things to Do: ${(destData.things_to_do || []).join(", ") || "Not specified"}
+        - Travel Tips: ${(destData.travel_tips || []).join(", ") || "Not specified"}
         - Local Specialty: Not specified
-
-       Use this data to craft a rich trip plan:
-    - Prioritize "Things to Do" matching user activities.
-    - Use numeric ratings to align with preferences.
-    - Include the Nearby Landmark if it fits.
-    - Weave Travel Tips into essentialInfo.
-    - Add Local Specialty to restaurants.mustTryDishes or itinerary notes if provided.
-  `;
-}
+    
+        Use this data to craft a rich trip plan:
+        - Prioritize "Things to Do" matching user activities.
+        - Use numeric ratings to align with preferences.
+        - Include the Nearby Landmark if it fits.
+        - Weave Travel Tips into essentialInfo.
+        - Add Local Specialty to restaurants.mustTryDishes or itinerary notes if provided.
+      `;
+    }
 
     if (isNepalDestination) {
       const nearbyPlaces = matchedDestination
