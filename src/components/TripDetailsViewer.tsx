@@ -24,17 +24,15 @@ import {
   Luggage,
   Info,
   Camera,
-  List,
-  Star,
 } from "lucide-react";
 
 interface TripDetailViewerProps {
-  data: any; // Consider defining a stricter type based on your API response
+  data: any; // Replace 'any' with a more specific type if possible
 }
 
 const TripDetailViewer: React.FC<TripDetailViewerProps> = ({ data }) => {
   const tripData = data?.record?.tripPlan;
-  const formData = data?.record?.formData;
+  const formData = data?.record?.formData; // Get the entire formData
   const userData = formData?.user;
 
   if (!tripData) {
@@ -50,26 +48,30 @@ const TripDetailViewer: React.FC<TripDetailViewerProps> = ({ data }) => {
   const firstName = userData?.name?.split(" ")[0] || "Traveler";
 
   const createGoogleMapsUrl = (query: string) => {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      query
+    )}`;
   };
 
   const TripOverview = () => (
     <Card className="mb-6 overflow-hidden border-none shadow-md">
       <div className="relative h-48 w-full">
         <img
-          src="/pokhara.jpg" // Replace with dynamic image if available
+          src="/pokhara.jpg"
           alt={tripData.tripOverview.destination}
           className="object-cover h-full w-full"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
           <div className="p-6 text-white">
-            <h2 className="text-2xl font-bold">{tripData.tripOverview.destination}</h2>
+            <h2 className="text-2xl font-bold">
+              {tripData.tripOverview.destination}
+            </h2>
             <p className="text-sm opacity-80">{tripData.tripOverview.weatherInfo}</p>
           </div>
         </div>
       </div>
       <CardContent className="pt-6 bg-white rounded-b-lg">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="flex items-center gap-3">
             <MapPin className="w-5 h-5 text-indigo-500" />
             <div>
@@ -84,6 +86,7 @@ const TripDetailViewer: React.FC<TripDetailViewerProps> = ({ data }) => {
               <p className="font-medium">{tripData.tripOverview.duration} days</p>
             </div>
           </div>
+          {/* Display Start and End Dates */}
           {formData.startDate && formData.endDate && (
             <div className="flex items-center gap-3">
               <Calendar className="w-5 h-5 text-indigo-500" />
@@ -110,43 +113,6 @@ const TripDetailViewer: React.FC<TripDetailViewerProps> = ({ data }) => {
               <p className="font-medium">{tripData.tripOverview.budgetCategory}</p>
             </div>
           </div>
-          {tripData.tripOverview.nearbyLandmark && (
-            <div className="flex items-center gap-3">
-              <MapPin className="w-5 h-5 text-indigo-500" />
-              <div>
-                <p className="text-sm text-gray-500">Nearby Landmark</p>
-                <p className="font-medium">{tripData.tripOverview.nearbyLandmark}</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Additional Sections for Things to Do and Travel Tips */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {tripData.tripOverview.thingsToDo && tripData.tripOverview.thingsToDo.length > 0 && (
-            <div>
-              <h3 className="font-medium mb-2 flex items-center gap-1 text-indigo-700">
-                <List className="w-5 h-5" /> Things to Do
-              </h3>
-              <ul className="list-disc list-inside space-y-1 text-gray-700">
-                {tripData.tripOverview.thingsToDo.map((item: string, index: number) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {tripData.tripOverview.travelTips && tripData.tripOverview.travelTips.length > 0 && (
-            <div>
-              <h3 className="font-medium mb-2 flex items-center gap-1 text-indigo-700">
-                <Star className="w-5 h-5" /> Travel Tips
-              </h3>
-              <ul className="list-disc list-inside space-y-1 text-gray-700">
-                {tripData.tripOverview.travelTips.map((tip: string, index: number) => (
-                  <li key={index}>{tip}</li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>
@@ -621,6 +587,7 @@ const TripDetailViewer: React.FC<TripDetailViewerProps> = ({ data }) => {
     </div>
   );
 
+  // New Section to Display User Preferences
   const UserPreferencesSection = () => (
     <Card className="mb-6 border-none shadow-md overflow-hidden">
       <div className="bg-gradient-to-r from-teal-500 to-green-600 text-white">
@@ -736,6 +703,7 @@ const TripDetailViewer: React.FC<TripDetailViewerProps> = ({ data }) => {
 
   return (
     <div className="max-w-7xl mx-auto p-4">
+      {/* Hero Section with Main Destination Image */}
       <div className="relative h-64 md:h-96 w-full mb-6 rounded-xl overflow-hidden shadow-xl">
         <img
           src="/pokhara.jpg"
@@ -765,6 +733,8 @@ const TripDetailViewer: React.FC<TripDetailViewerProps> = ({ data }) => {
 
       <TripOverview />
       <CostBreakdown />
+
+      {/* Display User Preferences Section */}
       <UserPreferencesSection />
 
       <Tabs defaultValue="itinerary" className="mb-6">
